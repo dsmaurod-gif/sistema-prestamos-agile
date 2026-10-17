@@ -54,10 +54,10 @@ Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 
 ## 5. Base de datos (regla de oro)
 
-- **Nadie modifica tablas ni funciones desde el panel de Supabase.** Todo cambio de base va como archivo en `/sql` con número siguiente (`08_...sql`), en un PR.
-- **Solo A ejecuta los `.sql` en Supabase** y avisa al grupo: "BD actualizada a 08".
+- **Nadie modifica tablas ni funciones desde el panel de Supabase.** Todo cambio de base va como archivo en `/sql` con número siguiente (`09_...sql`; el último es el 08), en un PR.
+- **Solo A ejecuta los `.sql` en Supabase** y avisa al grupo: "BD actualizada a 09". Orden en una base nueva: 01, 02, 03, **08**, 04, 04b. Si se vuelve a ejecutar 02, ejecutar 08 después.
 - Si necesitas un cambio en la BD, abre un *issue* "BD: ..." describiendo qué necesitas; no lo hagas tú.
-- Los datos de prueba se reinician con `sql/04_seed_demo.sql` (avisar antes: borra los clientes).
+- Los datos de prueba se reinician con `sql/04_seed_demo.sql` y luego `sql/04b_demo_cupo_liberado.sql` (avisar antes: borran los clientes). Las pruebas de reglas v1.3 son `sql/05b_pruebas_al_cancelar.sql`; ejecutar 04 y 04b después.
 
 ## 6. Qué NO se sube nunca
 
@@ -85,3 +85,14 @@ Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 - Daily de 10 minutos a las **9 PM** por llamada: qué hice, qué haré, qué me bloquea.
 - Un bloqueo de más de 30 minutos se avisa **en el momento** en el grupo.
 - Al mergear: mensaje al grupo con la HU y la rama.
+
+## 10. Reparto y servicios por historia (v1.3)
+
+| Quién | Historias | Servicios que usa (en `frontend/src/app/services/`) |
+|---|---|---|
+| **A** | HU-01, HU-02, HU-T1, Edge Functions, despliegue, RLS | `AuthService`, `DemoService` |
+| **B** | HU-03 (selector DNI / RUC), HU-04, HU-05, HU-23 (vista) | `ClientesService.consultarDni / consultarRuc / registrar / buscar / obtener / deuda / capitalVigente` |
+| **C** | HU-06, HU-07, HU-08, HU-10 | `PrestamosService.evaluar / aprobar / obtener / listarPorCliente / listar` |
+| **D** | HU-09, HU-15, HU-16, HU-17 | `PrestamosService.obtener` (contrato), `ReportesService.morosos / porSede / sedes / listarBitacora` |
+
+Cada quien trabaja solo en su página de `pages/`; los tipos viven en `core/contrato.ts` y cualquier cambio de firma lo coordina A.

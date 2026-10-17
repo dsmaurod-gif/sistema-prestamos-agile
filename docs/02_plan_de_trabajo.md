@@ -1,9 +1,9 @@
 # Plan de trabajo — MVP Sistema de Préstamos
 
-**Hoy:** viernes 16/10 · **Presentación:** lunes 19/10, 4:00 PM, presencial
+**Versión 1.3 · 17/10/2026** · **Hoy:** sábado 17/10 · **Presentación:** lunes 19/10, 4:00 PM, presencial
 **Equipo:** 4 personas · **Capacidad supuesta:** ~4–5 h útiles por persona al día (ajustar a la realidad del grupo)
 
-Documento de referencia: `01_documentacion_base.md` (IDs RN-, RF-, HU-, SUP-).
+Documento de referencia: `03_entregable_requerimientos_hu_ca.md` (IDs RN-, RF-, HU-). `01_documentacion_base.md` no está en el repositorio.
 
 ---
 
@@ -26,6 +26,15 @@ Documento de referencia: `01_documentacion_base.md` (IDs RN-, RF-, HU-, SUP-).
 
 ---
 
+**Decisiones de la v1.3 (sábado 17/10):**
+- **Liberación de cupo (P1 resuelta):** el profesor dijo «el préstamo debe pagarse completamente antes de proceder con algún nuevo que pueda rebasar el límite». Se aplica `liberacion_cupo = AL_CANCELAR`.
+- **RUC:** se implementa un selector "DNI / RUC" al registrar. El cliente se sigue identificando por DNI; con RUC se consulta SUNAT (Edge Function `consultar-ruc`), solo se acepta ACTIVO y HABIDO, y se exige el DNI del titular. *Diseño por defecto, por confirmar con el profesor.*
+- **Alcance Sprint 1:** se mantienen HU-09 (contrato imprimible), HU-16 (auditoría visible, incluye evaluar) y HU-17 (reporte por sede). HU-09 y HU-17 pasan a Must. Pagos (HU-18 a HU-22) pasan al Sprint 2.
+- **Método de cuota por defecto:** CAPITAL_CONSTANTE (5,000 a 6 meses → primera cuota 943.85) y mora COMPUESTA; ambos siguen *por confirmar con el profesor*.
+- **Base de datos:** nuevo script `sql/08_ajustes_v1_3.sql`; escenarios demo y pruebas ajustados (`04b`, `05b`).
+
+---
+
 ## 1. Estrategia: cómo "vender" el MVP
 
 **Mensaje central:** *"Un sistema pequeño pero completo en lo que hace, que ya protege tu capital desde el primer día."*
@@ -45,7 +54,7 @@ Criterio alineado con lo dicho por el profesor: ni pasarela ni registro de pagos
 | Elemento | Decisión |
 |---|---|
 | Pasarela de pago | **Fuera, definitivo** (el trámite es presencial). |
-| Registro de pagos (HU-18 a HU-22) | **Fuera de esta entrega por completo.** No hay pantalla, botón, campo ni "versión mínima". Se eliminó la puerta que permitía sumarlo si sobraba tiempo. |
+| Registro de pagos (HU-18 a HU-22) | **Fuera de esta entrega por completo (Sprint 2).** No hay pantalla, botón, campo ni "versión mínima". Se eliminó la puerta que permitía sumarlo si sobraba tiempo. |
 | Lo que sí se construye | Originación y control: cliente, evaluación, aprobación, cronograma, límite, estados, mora por días y reportes por sede. |
 | Modelo de datos | Las cuotas ya tienen estado (Pendiente, Pagada, Vencida) para que el módulo futuro se enganche sin rehacer nada; la tabla de pagos se crea junto con ese módulo. |
 
@@ -78,10 +87,12 @@ A = integrador y líder técnico. B, C y D = los otros tres integrantes (asignen
 
 | | Área | Historias | Ramas |
 |---|---|---|---|
-| **A** (tú) | **Base de datos, seguridad, integración y despliegue.** Repositorio y estructura inicial; vínculo de usuarios (Auth); consulta de DNI (función de servidor); seguridad (RLS); despliegue en línea; revisa y mergea todos los PR; guía de sustentación técnica | HU-01 (parte BD), HU-03 (consulta DNI), seguridad, HU-02 | `infra/repo-base`, `feature/HU-03-consulta-dni`, `infra/seguridad-rls`, `infra/despliegue` |
-| **B** | **Acceso y clientes (frontend).** Login, rutas protegidas, menú por rol, registro de cliente con DNI y fecha de caducidad, búsqueda, ficha del cliente (estado, cupo, préstamos, deuda y mora) | HU-01, HU-03 (pantalla), HU-04, HU-05 | `feature/HU-01-login`, `feature/HU-03-registro-cliente`, `feature/HU-05-ficha-cliente` |
-| **C** | **Préstamos (frontend).** Solicitud, evaluación e informe, pantalla de confirmación con casilla de conformidad, cronograma, contrato imprimible/PDF, listado y detalle de préstamos | HU-06, HU-07, HU-08, HU-09, HU-10 | `feature/HU-06-evaluar-prestamo`, `feature/HU-07-aprobar-prestamo`, `feature/HU-09-contrato-pdf`, `feature/HU-10-listado-prestamos` |
-| **D** | **Morosidad, reportes, demo y calidad.** Reporte de morosos y extrajudiciales con CSV, reporte por sede (administrador), panel de modo demostración (fecha simulada y aviso), casos de prueba, datos demo, guion y manual breve | HU-13/14 (vista), HU-15, HU-17, HU-23 (vista), HU-T1, HU-16 (opcional) | `feature/HU-15-reporte-morosos`, `feature/HU-17-reporte-sedes`, `feature/HU-T1-modo-demo`, `docs/casos-de-prueba` |
+| **A** (integrador) | **Base de datos, seguridad, integración y despliegue.** Login (HU-01), modo demostración (HU-T1), Edge Functions de DNI y RUC, script `08`, RLS, despliegue en línea, revisión y merge de todos los PR, guía de sustentación técnica | HU-01, HU-02, HU-T1, HU-03 (Edge Functions), seguridad | `feature/HU-01-login`, `infra/edge-dni`, `feature/HU-T1-modo-demo`, `infra/seguridad-rls`, `infra/despliegue` |
+| **B** | **Clientes (frontend).** Registro de cliente con selector DNI / RUC (consulta de DNI y de RUC, ingreso manual con doble confirmación), rechazo de documentos no permitidos, búsqueda, ficha del cliente (estado, cupo, préstamos) y vista de deuda y mora | HU-03, HU-04, HU-05, HU-23 (vista) | `feature/HU-03-registro-cliente`, `feature/HU-05-ficha-cliente` |
+| **C** | **Préstamos (frontend).** Solicitud, evaluación e informe, confirmación con casilla de conformidad, cronograma, listado y detalle de préstamos | HU-06, HU-07, HU-08, HU-10 | `feature/HU-06-evaluar-prestamo`, `feature/HU-07-aprobar-prestamo`, `feature/HU-10-listado-prestamos` |
+| **D** | **Documentos y reportes (frontend).** Contrato imprimible/PDF, reporte de morosos con CSV, pantalla de bitácora (auditoría) y reporte por sede | HU-09, HU-15, HU-16, HU-17 | `feature/HU-09-contrato-pdf`, `feature/HU-15-reporte-morosos`, `feature/HU-16-bitacora`, `feature/HU-17-reporte-sedes` |
+
+> Los casos de prueba (`docs/casos-de-prueba`) y la demo los reparten entre B, C y D en el QA cruzado. Los servicios que usa cada historia están en `CONTRIBUTING.md` (sección 10).
 
 **Dependencias que importan**
 1. **A entrega la estructura inicial hoy antes de las 2 PM** (menú, rutas, cliente de Supabase, carpeta `services/`). B, C y D no pueden empezar sus pantallas sin eso: mientras tanto leen la documentación y el contrato de API, y preparan sus pantallas en papel o en borrador.
@@ -157,14 +168,14 @@ Horas útiles supuestas: 5–6 por persona entre semana de parciales; ajusten a 
 
 ## 5. Preguntas pendientes para el profesor
 
-Las respuestas ya recibidas están incorporadas en la documentación (SUP-01, 05, 06, 07, 13, 15, 16, 20). Quedan **cuatro**, con números para que solo elija:
+Las respuestas ya recibidas están incorporadas en la documentación (SUP-01, 05, 06, 07, 13, 15, 16, 20). Quedan **tres** (P2, P3, P4; P1 se resolvió en la v1.3), con números para que solo elija:
 
 | # | Pregunta | Ejemplo para que elija | Por defecto hoy |
 |---|---|---|---|
-| P1 | **Liberación del cupo.** Usted dijo que el préstamo debe pagarse completo antes de uno nuevo que rebase el límite, pero en su chat dijo que con 10 mil a 2 años y 5 mil pagados al año puede pedir 5 mil. ¿Cuál vale? | A) Se libera lo amortizado: con 5,000 pagados, pide 5,000. B) Solo al terminar de pagar: debe pagar los 10,000. | A |
-| P2 | **Cuotas.** "Interés compuesto" ya lo aplicamos (TEA 30%). ¿Las cuotas son iguales cada mes, o el capital es igual y baja la cuota? | 5,000 a 6 meses: A) 6 cuotas de ≈ 898.98. B) 943.85, 925.44 … 851.75. | B (hace exacto su ejemplo del chat) |
+| P1 | **Liberación del cupo.** *Resuelta (v1.3):* el profesor respondió «el préstamo debe pagarse completamente antes de proceder con algún nuevo que pueda rebasar el límite». | Se aplica **B)**: el cupo solo se libera al cancelar el préstamo completo. El caso de su chat (10,000 a 2 años, 5,000 amortizados al año) queda para contrastar con él: *por confirmar* | **AL_CANCELAR** |
+| P2 | **Cuotas.** "Interés compuesto" ya lo aplicamos (TEA 30%). ¿Las cuotas son iguales cada mes, o el capital es igual y baja la cuota? | 5,000 a 6 meses: A) 6 cuotas de ≈ 898.98. B) 943.85, 925.44 … 851.75. | B (CAPITAL_CONSTANTE, primera cuota 943.85) · *por confirmar* |
 | P3 | **Mora del 1% diario "del monto acumulado".** ¿Se capitaliza cada día o es 1% fijo de la cuota por día? | Cuota de 1,000 con 10 días de atraso: A) compuesta: 104.62. B) simple: 100.00. A 470 días de atraso, una cuota de 1,000 sube a ≈ 107,000 con A. | A |
-| P4 | **Consulta de DNI.** ¿Basta con validar el nombre por RENIEC y escribir la fecha de caducidad que figura en el DNI físico? | — | Sí |
+| P4 | **Consulta de DNI y RUC.** ¿Basta con validar el nombre por RENIEC y escribir la fecha de caducidad que figura en el DNI físico? Con RUC: ¿basta consultar SUNAT y exigir ACTIVO/HABIDO más el DNI del titular? | — | Sí (*por confirmar* el detalle del RUC) |
 
 Lo que no se confirme queda **parametrizado** (basta cambiar un valor en la tabla `parametros`).
 
@@ -177,18 +188,18 @@ Relato: *"Soy la asesora de la sede Trujillo. Llega un cliente…"*
 | Paso | Qué se muestra | Regla demostrada |
 |---|---|---|
 | 1 | Login de trabajadora; se ve su sede | RN-01 |
-| 2 | Registrar un **cliente nuevo** con DNI: nombre autocompletado y no editable | RN-03 |
+| 2 | Registrar un **cliente nuevo** con DNI (y con RUC en otro caso): nombre autocompletado y no editable; el RUC muestra razón social, estado y condición | RN-03, RN-30 |
 | 3 | Intentar registrar con **carnet de extranjería/pasaporte** → bloqueado; luego un **DNI vencido** → bloqueado | RN-04, RN-25 |
 | 4 | Evaluar **5,000 a 6 meses** → informe: cuota, total, primera fecha | RN-09, RN-12 |
 | 5 | Aprobar → **cronograma** mes a mes (vencimientos cada 30 días) → imprimir contrato | RN-10, RN-11 |
 | 6 | Mismo cliente: pedir **6,000 más** → rechazado (pasa 10,000); pedir **5,000** → aprobado (llega a 10,000 exacto) | RN-05, RN-06 |
 | 7 | Cliente con vigente 7,000: pedir 5,000 → rechazado, "máximo 3,000" | RN-06 |
-| 8 | Cliente precargado (10,000 a 2 años, 5,000 ya amortizados): mostrar **saldo liberado** y pedir 5,000 | RN-07 |
+| 8 | Cliente **70000007** (`04b`): un préstamo **cancelado** libera su cupo y otro **parcialmente pagado** no lo libera → pedir 6,000 aprobado. Cliente 70000002 (10,000 a 24 meses, 12 cuotas pagadas): pedir 5,000 → **rechazado** (el cupo se libera al cancelar) | RN-07 |
 | 9 | **Cliente moroso con saldo libre** → rechazado por morosidad | RN-18, RN-19 |
 | 10 | Activar fecha simulada: un cliente al día cruza el día 31, pasa a Moroso y empieza a acumular 1% diario de mora | RN-18, RN-24 |
 | 11 | Cliente **Extrajudicial** (más de un año) → bloqueado; reporte de derivación con deuda y mora + CSV | RN-20, RN-21, RN-24 |
 | 12 | Casos extremos: plazo 1 mes y 60 meses; 10,000 aceptado; 10,001 rechazado | RN-05, RN-08 |
-| 13 | **Reporte por sede**: morosos y préstamos otorgados en Chimbote, Trujillo, Chiclayo, Piura y Tumbes | RN-23 |
+| 13 | **Reporte por sede**: morosos y préstamos otorgados en Chimbote, Trujillo, Chiclayo, Piura y Tumbes; **bitácora de auditoría** (evaluar, aprobar, registrar cliente) | RN-23, HU-16 |
 | 14 | Cierre: *"Este sprint entrega el control del otorgamiento y del riesgo; el cobro es un módulo aparte que preferimos no dejar a medias."* | Alcance |
 
 **Decirlo en voz alta:** los pasos 8–11 usan datos precargados y fecha simulada (no hay módulo de pagos en este sprint).
@@ -204,30 +215,35 @@ Relato: *"Soy la asesora de la sede Trujillo. Llega un cliente…"*
 | T-01 | DNI de 7 dígitos / con letras | Rechazo con mensaje |
 | T-02 | DNI duplicado | Muestra ficha existente, no duplica |
 | T-03 | Intentar editar nombre verificado | No permitido |
-| T-04 | Carnet de extranjería / pasaporte | No se crea cliente |
+| T-04 | Carnet de extranjería / pasaporte | No se crea cliente. ⚠ v1.3: con el selector DNI / RUC, el RUC no sustituye al DNI |
 | T-05 | Monto 10,000 con vigente 0 | Aprobable |
 | T-06 | Monto 10,001 | Rechazado |
 | T-07 | Vigente 7,000 + 5,000 | Rechazado, máximo 3,000 |
 | T-08 | Vigente 5,000 + 1,000 + 1,000 + 1,000 | Los tres aprobados (suman 8,000) |
 | T-09 | Plazo 0, 61, decimal | Rechazado |
 | T-10 | Plazo 1 y 60 meses | 1 y 60 cuotas; saldo final 0.00 |
-| T-11 | 5,000 a 6 meses | Coincide con el ejemplo de la documentación |
+| T-11 | 5,000 a 6 meses | ⚠ v1.3: primera cuota **943.85** (CAPITAL_CONSTANTE, por defecto). Con CUOTA_FIJA sería 898.98 |
 | T-12 | Moroso con saldo libre | Rechazado en evaluación y en aprobación |
 | T-13 | Día 30 sin pago / día 31 sin pago | Al día / Moroso |
 | T-14 | Moroso 364 / 366 días sin pagos | Moroso / Extrajudicial |
 | T-15 | Dos sedes aprueban a la vez al mismo cliente cerca del tope | Solo una pasa; la otra es rechazada |
 | T-16 | Evaluar sin aprobar | No crea préstamo |
 | T-17 | Acceso a pantallas sin sesión | Redirige al login |
-| T-18 | API de DNI caída | Ingreso manual con doble confirmación y marca "No verificado" |
+| T-18 | API de DNI caída | Ingreso manual con doble confirmación y marca "No verificado". ⚠ v1.3: si cae la API de RUC, se registra solo con DNI |
 | T-19 | Imprimir contrato dos veces | Documento idéntico |
 | T-20 | Reiniciar datos demo | Estado inicial conocido, sin errores |
 | T-21 | Reporte por sede | Conteos coinciden con los datos precargados de cada sede |
-| T-22 | 10,000 a 24 meses con 12 cuotas pagadas (precargado) | Disponible según el método confirmado (con capital constante: 5,000) |
+| T-22 | 10,000 a 24 meses con 12 cuotas pagadas (precargado) | ⚠ v1.3: con AL_CANCELAR el disponible es **0** (capital vigente 10,000). Con CAPITAL_AMORTIZADO sería 5,000 *(por confirmar con el profesor)* |
 | T-23 | DNI vencido o sin fecha de caducidad | Rechazado al registrar y al evaluar |
 | T-24 | Aprobar sin confirmar conformidad | Rechazado; no existe forma de anular un préstamo aprobado |
 | T-25 | Mora: 1,000 con 0, 1 y 10 días de atraso | 0.00, 10.00 y 104.62 (compuesta) |
-| T-26 | Préstamo con todas las cuotas pagadas | Pasa a Cancelado y libera su cupo |
+| T-26 | Préstamo con todas las cuotas pagadas | Pasa a Cancelado y libera su cupo. ⚠ v1.3: es el **único** camino que libera cupo; un pago parcial no libera |
 | T-27 | Trabajador entra al reporte por sede | Solo el Administrador accede |
+| T-28 | *(v1.3)* Registrar con RUC ACTIVO y HABIDO más el DNI del titular | Se guarda con RUC y razón social; el tope se sigue contando por DNI |
+| T-29 | *(v1.3)* RUC dado de baja o no habido, de 10 dígitos o con prefijo distinto de 10/20 | Rechazado con mensaje; no se crea el cliente |
+| T-30 | *(v1.3)* Evaluar una solicitud | Queda una fila EVALUAR_PRESTAMO en la bitácora y no se crea préstamo (aprobar no la duplica) |
+| T-31 | *(v1.3)* Pantalla de bitácora con filtros de fecha, acción y sede | Muestra los registros; la bitácora no se edita ni se borra |
+| T-32 | *(v1.3)* Cliente 70000007: préstamo A cancelado + préstamo B con 2 cuotas pagadas | Capital vigente 4,000; puede pedir hasta 6,000 |
 
 ---
 
@@ -269,7 +285,7 @@ Relato: *"Soy la asesora de la sede Trujillo. Llega un cliente…"*
 - **Guía de sustentación:** para cada decisión de negocio y técnica, el porqué (la persona sorteada "justifica y sustenta todo"). Ejemplos: por qué las reglas viven en la base de datos, por qué mora compuesta, por qué TEA, por qué no hay pasarela, por qué cupo global entre sedes.
 - **Entregable al profesor:** solo `03_entregable_requerimientos_hu_ca.md` (requerimientos, HU y criterios).
 
-## 11. Después de esta entrega (no se construye ahora)
+## 11. Sprint 2 (no se construye ahora)
 
 1. HU-18 registro de pago de cuota (con comprobante).
 2. HU-19 pago con múltiples métodos y cuentas Yape.
@@ -277,3 +293,13 @@ Relato: *"Soy la asesora de la sede Trujillo. Llega un cliente…"*
 4. HU-22 regularización de moroso.
 5. HU-21 verificación de que no existe condonación.
 6. Pantalla de administración (HU-02 completa) y panel del prestamista (HU-17).
+
+## Registro de cambios
+
+**1.3 (17/10/2026)**
+- Nuevo reparto: A (login, demo, Edge Functions, despliegue, script 08, RLS), B (HU-03 con DNI/RUC, HU-04, HU-05, HU-23 vista), C (HU-06, 07, 08, 10), D (HU-09, 15, 16, 17).
+- P1 resuelta (AL_CANCELAR); P2 y P3 siguen por confirmar con valores por defecto; P4 amplía el detalle del RUC.
+- Guion de demo: pasos 2, 8 y 13 ajustados. Casos de prueba: T-04, T-11, T-18, T-22 y T-26 afectados (⚠); T-28 a T-32 nuevos.
+- Los pagos pasan al Sprint 2. La sección 4 (cronograma día por día) conserva el plan original de la v1.2.
+
+**1.2** · versión anterior (sin número de versión en el documento).

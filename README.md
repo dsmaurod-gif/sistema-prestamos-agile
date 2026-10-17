@@ -6,8 +6,8 @@ Sistema web para las 5 sedes (Chimbote, Trujillo, Chiclayo, Piura, Tumbes). Uso 
 
 ```
 /docs                Requerimientos, HU y criterios, plan, contrato de API
-/sql                 Scripts de base de datos (01..07), se ejecutan en orden
-/supabase/functions  Funciones de servidor (consulta de DNI)
+/sql                 Scripts de base de datos (01..08, más 04b y 05b), se ejecutan en orden
+/supabase/functions  Edge Functions (consultar-dni, consultar-ruc)
 /scripts             Verificación del entorno y configuración del frontend (Node)
 /frontend            Aplicación web (Angular + Tailwind CSS)
   src/app/core         Cliente de Supabase, tipos del contrato, guardias y formato
@@ -35,6 +35,20 @@ Sistema web para las 5 sedes (Chimbote, Trujillo, Chiclayo, Piura, Tumbes). Uso 
 7. Leer **`CONTRIBUTING.md`** (ramas y Pull Requests) y **`docs/CONTRATO_API.md`** (qué se puede llamar) antes de escribir código.
 
 > `npm start` y `npm run build` generan `frontend/src/environments/environment.ts` a partir del `.env` (ese archivo no se sube a git).
+
+## Despliegue en Vercel
+
+El frontend es una SPA de Angular; la salida de `npm run build` queda en `frontend/dist/frontend/browser` y `frontend/vercel.json` ya define el comando, la carpeta y la reescritura de rutas hacia `index.html`.
+
+1. En Vercel: **Add New → Project** e importa el repositorio de GitHub (rama de producción: `main`).
+2. **Root Directory:** `frontend`.
+3. **Build Command:** `npm run build` · **Output Directory:** `dist/frontend/browser` (también están en `vercel.json`).
+4. Activa **Include source files outside of the Root Directory in the Build Step** (Settings → General → Root Directory). Es obligatorio: `prebuild` ejecuta `../scripts/generar-entorno-frontend.mjs`, que está fuera de `frontend/`.
+5. **Node.js Version:** 22.x o superior (el script usa `process.loadEnvFile`).
+6. **Environment Variables** (Production y Preview): `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. Solo la llave pública (`anon`/publishable), nunca la `service_role`.
+7. Deploy. Prueba el login y recarga una ruta interna (por ejemplo `/clientes`): debe seguir funcionando gracias a la reescritura.
+
+Las Edge Functions no se despliegan en Vercel: `supabase functions deploy consultar-dni` y `supabase functions deploy consultar-ruc` (el secret `PERU_API_TOKEN` vive en Supabase).
 
 ## Documentos
 
