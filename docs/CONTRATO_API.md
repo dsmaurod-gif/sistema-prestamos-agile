@@ -124,3 +124,25 @@ supabase.from('parametros').update({ valor: '' }).eq('clave', 'fecha_referencia'
 - Estado del cliente con color: Al día (verde), Moroso (ámbar), Extrajudicial (rojo).
 - Cuota `VENCIDA` resaltada; mostrar días de atraso y mora donde haya deuda.
 - Antes de aprobar: pantalla de resumen (monto, plazo, cuota, total, primer vencimiento) + casilla de conformidad.
+
+## 6. Edge Function `consultar-dni` (RENIEC)
+
+Autocompleta nombres y apellidos de un DNI (HU-03 CA1). No es una RPC de SQL: se llama con `supabase.functions.invoke`, siempre desde `ClientesService.consultarDni(dni)`. El token del proveedor vive solo en el secret `PERU_API_TOKEN` del servidor.
+
+```js
+const { data, error } = await supabase.functions.invoke('consultar-dni', { body: { dni: '12345678' } });
+```
+
+**Entrada:** `{ "dni": "12345678" }` (8 dígitos numéricos, como texto).
+
+| Caso | HTTP | Cuerpo |
+|---|---|---|
+| DNI existe | 200 | `{ "existe": true, "nombres": "DIEGO ALONSO", "apellidos": "PEREZ GOMEZ" }` (MAYÚSCULAS, sin espacios dobles) |
+| DNI no existe | 200 | `{ "existe": false }` |
+| DNI mal formado (no son 8 dígitos) | 400 | `{ "error": "El DNI debe tener exactamente 8 dígitos numéricos." }` |
+| Proveedor caído, token inválido, cuota agotada o timeout (8 s) | 502 | `{ "error": "Servicio de consulta de DNI no disponible" }` |
+
+- Con `existe: true` el nombre se muestra en solo lectura y el cliente se registra con `p_verificado = true`.
+- Con `existe: false` no se puede registrar con datos verificados (HU-03 CA3).
+- Con el error 502 (`consultarDni` lanza `ErrorBaseDatos`) se ofrece el ingreso manual con doble confirmación y `p_verificado = false` (HU-03 CA5).
+- La función exige JWT: solo responde con la sesión iniciada (o la llave pública de la app).
