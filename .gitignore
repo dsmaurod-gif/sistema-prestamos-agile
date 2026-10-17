@@ -1,4 +1,29 @@
+# Dependencias y compilados
 node_modules/
+dist/
+build/
+.angular/
+.vite/
+coverage/
+
+# Secretos (solo se sube .env.example)
 .env
-.DS_Store
+.env.*
+!.env.example
+
+# Registros y archivos del sistema
 *.log
+.DS_Store
+Thumbs.db
+
+# Editores y asistentes
+.vscode/
+.idea/
+.claude/
+CLAUDE.md
+
+# Material local de arranque
+_kit_entrada/
+
+# Configuración del frontend generada desde .env
+frontend/src/environments/environment.ts
