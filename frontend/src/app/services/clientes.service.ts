@@ -5,6 +5,7 @@ import {
   DeudaCliente,
   RegistrarClienteParams,
   RespuestaConsultaDni,
+  RespuestaConsultaRuc,
   Uuid,
 } from '../core/contrato';
 import { AuthService } from './auth.service';
@@ -14,7 +15,7 @@ export class ClientesService {
   private readonly db = inject(SUPABASE);
   private readonly auth = inject(AuthService);
 
-  /** fn_registrar_cliente → id del cliente nuevo. */
+  /** fn_registrar_cliente → id del cliente nuevo. p_ruc y p_razon_social son opcionales. */
   async registrar(datos: Omit<RegistrarClienteParams, 'p_trabajador'>): Promise<Uuid> {
     return rpc(this.db, 'fn_registrar_cliente', {
       ...datos,
@@ -60,6 +61,18 @@ export class ClientesService {
       body: { dni },
     });
     if (error || !data) throw new ErrorBaseDatos('Servicio de consulta de DNI no disponible');
+    return data;
+  }
+
+  /**
+   * Edge Function consultar-ruc (SUNAT). Si el servicio no está disponible lanza un error.
+   * La pantalla debe rechazar el RUC si estado ≠ ACTIVO o condición ≠ HABIDO.
+   */
+  async consultarRuc(ruc: string): Promise<RespuestaConsultaRuc> {
+    const { data, error } = await this.db.functions.invoke<RespuestaConsultaRuc>('consultar-ruc', {
+      body: { ruc },
+    });
+    if (error || !data) throw new ErrorBaseDatos('Servicio de consulta de RUC no disponible');
     return data;
   }
 }
