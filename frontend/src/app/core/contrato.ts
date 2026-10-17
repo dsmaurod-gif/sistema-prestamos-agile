@@ -116,6 +116,13 @@ export interface FuncionesRpc {
   fn_capital_vigente: { params: ClienteParams; respuesta: number };
 }
 
+// ---------- Edge Function consultar-dni ----------
+
+/** Respuesta de consultar-dni cuando el servicio responde (200). */
+export type RespuestaConsultaDni =
+  | { existe: true; nombres: string; apellidos: string }
+  | { existe: false };
+
 // ---------- Tablas (solo lectura, salvo parametros en modo demo) ----------
 
 export interface Sede {

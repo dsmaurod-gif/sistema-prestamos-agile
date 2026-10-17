@@ -27,3 +27,5 @@ _kit_entrada/
 
 # Configuración del frontend generada desde .env
 frontend/src/environments/environment.ts
+
+supabase/.temp/

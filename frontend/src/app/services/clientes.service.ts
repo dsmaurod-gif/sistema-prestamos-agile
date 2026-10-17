@@ -1,6 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { resultado, rpc, SUPABASE } from '../core/supabase';
-import { Cliente, DeudaCliente, RegistrarClienteParams, Uuid } from '../core/contrato';
+import { ErrorBaseDatos, resultado, rpc, SUPABASE } from '../core/supabase';
+import {
+  Cliente,
+  DeudaCliente,
+  RegistrarClienteParams,
+  RespuestaConsultaDni,
+  Uuid,
+} from '../core/contrato';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -43,5 +49,17 @@ export class ClientesService {
   /** fn_capital_vigente → capital vigente del cliente. */
   async capitalVigente(clienteId: Uuid): Promise<number> {
     return rpc(this.db, 'fn_capital_vigente', { p_cliente: clienteId });
+  }
+
+  /**
+   * Edge Function consultar-dni (RENIEC). Si el servicio no está disponible lanza un error:
+   * la pantalla debe ofrecer el ingreso manual con doble confirmación (HU-03 CA5).
+   */
+  async consultarDni(dni: string): Promise<RespuestaConsultaDni> {
+    const { data, error } = await this.db.functions.invoke<RespuestaConsultaDni>('consultar-dni', {
+      body: { dni },
+    });
+    if (error || !data) throw new ErrorBaseDatos('Servicio de consulta de DNI no disponible');
+    return data;
   }
 }
