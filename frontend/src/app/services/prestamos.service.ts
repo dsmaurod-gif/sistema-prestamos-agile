@@ -3,9 +3,11 @@ import { resultado, rpc, SUPABASE } from '../core/supabase';
 import {
   AprobarPrestamoParams,
   EvaluacionPrestamo,
+  EstadoPrestamo,
   EvaluarPrestamoParams,
   PrestamoConCuotas,
   PrestamoDetalle,
+  PrestamoListado,
   Uuid,
 } from '../core/contrato';
 import { AuthService } from './auth.service';
@@ -44,5 +46,23 @@ export class PrestamosService {
         .eq('cliente_id', clienteId)
         .order('fecha_desembolso', { ascending: false }),
     );
+  }
+
+  /** Lista préstamos con su cliente y sede (HU-10), del más reciente al más antiguo. Solo lectura. */
+  async listar(
+    filtros: { estado?: EstadoPrestamo; sedeId?: number; clienteId?: Uuid } = {},
+    limite = 200,
+  ): Promise<PrestamoListado[]> {
+    let consulta = this.db.from('prestamos').select('*, clientes(*), sedes(nombre)');
+    if (filtros.estado) consulta = consulta.eq('estado', filtros.estado);
+    if (filtros.sedeId !== undefined) consulta = consulta.eq('sede_id', filtros.sedeId);
+    if (filtros.clienteId) consulta = consulta.eq('cliente_id', filtros.clienteId);
+    const filas = resultado(
+      await consulta
+        .order('fecha_desembolso', { ascending: false })
+        .order('creado_en', { ascending: false })
+        .limit(limite),
+    );
+    return filas as unknown as PrestamoListado[]; // PostgREST devuelve cada relación como objeto
   }
 }

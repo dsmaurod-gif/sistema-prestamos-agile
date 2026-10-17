@@ -29,3 +29,6 @@ _kit_entrada/
 frontend/src/environments/environment.ts
 
 supabase/.temp/
+
+# Documentos de contexto locales (no se versionan)
+CONTEXTO_PROYECTO.md

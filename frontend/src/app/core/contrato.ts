@@ -22,6 +22,10 @@ export interface RegistrarClienteParams {
   p_verificado: boolean;
   p_trabajador: Uuid;
   p_dni_caducidad: FechaISO;
+  /** RUC opcional (11 dígitos, empieza con 10 o 20); el cliente se sigue identificando por DNI. */
+  p_ruc?: string | null;
+  /** Obligatoria si se envía p_ruc. */
+  p_razon_social?: string | null;
 }
 
 export interface EvaluarPrestamoParams {
@@ -120,7 +124,11 @@ export interface FuncionesRpc {
 
 /** Respuesta de consultar-dni cuando el servicio responde (200). */
 export type RespuestaConsultaDni =
-  | { existe: true; nombres: string; apellidos: string }
+  { existe: true; nombres: string; apellidos: string } | { existe: false };
+
+/** Respuesta de consultar-ruc cuando el servicio responde (200). */
+export type RespuestaConsultaRuc =
+  | { existe: true; ruc: string; razon_social: string; estado: string; condicion: string }
   | { existe: false };
 
 // ---------- Tablas (solo lectura, salvo parametros en modo demo) ----------
@@ -152,6 +160,8 @@ export interface Cliente {
   fecha_moroso: FechaISO | null;
   fecha_extrajudicial: FechaISO | null;
   sede_registro_id: number;
+  ruc: string | null;
+  razon_social: string | null;
 }
 
 export interface Cuota {
@@ -188,6 +198,12 @@ export interface PrestamoDetalle extends PrestamoConCuotas {
   clientes: Cliente;
 }
 
+/** Préstamo con su cliente y la sede, para el listado (HU-10). */
+export interface PrestamoListado extends Prestamo {
+  clientes: Cliente;
+  sedes: Pick<Sede, 'nombre'> | null;
+}
+
 export interface RegistroBitacora {
   fecha: string;
   accion: string;
@@ -196,6 +212,12 @@ export interface RegistroBitacora {
   detalle: Record<string, unknown> | null;
   trabajador_id: Uuid | null;
   sede_id: number | null;
+}
+
+/** Fila de la bitácora con el nombre de la trabajadora y de la sede (HU-16). */
+export interface RegistroBitacoraDetallado extends RegistroBitacora {
+  trabajadores: { nombre: string } | null;
+  sedes: Pick<Sede, 'nombre'> | null;
 }
 
 export interface Parametro {
