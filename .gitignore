@@ -24,3 +24,6 @@ CLAUDE.md
 
 # Material local de arranque
 _kit_entrada/
+
+# Configuración del frontend generada desde .env
+frontend/src/environments/environment.ts
