@@ -101,6 +101,44 @@ import { PrestamosService } from '../services/prestamos.service';
             <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Total de intereses</dt><dd class="mt-1 font-medium text-slate-900">{{ montoTexto(informe.total_intereses) }}</dd></div>
             <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Primer vencimiento</dt><dd class="mt-1 font-medium text-slate-900">{{ fechaTexto(informe.primer_vencimiento) }}</dd></div>
           </dl>
+
+          @if (informe.aprobable) {
+            <div class="mt-6 rounded-md border border-emerald-200 bg-emerald-50 p-4">
+              <h3 class="font-medium text-emerald-900">Resumen antes de aprobar</h3>
+              <p class="mt-1 text-sm text-emerald-800">
+                Verifica las condiciones mostradas y confirma la conformidad del cliente.
+              </p>
+              <dl class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <div><dt class="text-xs text-emerald-700">Monto</dt><dd class="font-medium text-slate-900">{{ montoTexto(montoSolicitado()) }}</dd></div>
+                <div><dt class="text-xs text-emerald-700">Plazo</dt><dd class="font-medium text-slate-900">{{ plazo() }} meses</dd></div>
+                <div><dt class="text-xs text-emerald-700">Cuota</dt><dd class="font-medium text-slate-900">{{ montoTexto(informe.primera_cuota) }}</dd></div>
+                <div><dt class="text-xs text-emerald-700">Total a pagar</dt><dd class="font-medium text-slate-900">{{ montoTexto(informe.total_a_pagar) }}</dd></div>
+                <div><dt class="text-xs text-emerald-700">Primer vencimiento</dt><dd class="font-medium text-slate-900">{{ fechaTexto(informe.primer_vencimiento) }}</dd></div>
+              </dl>
+              <label class="mt-4 flex items-start gap-3 text-sm text-slate-800">
+                <input
+                  type="checkbox"
+                  [checked]="clienteConforme()"
+                  (change)="cambiarConformidad($event)"
+                  class="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-500"
+                />
+                <span>El cliente está conforme y firmó el contrato</span>
+              </label>
+              <app-aviso [mensaje]="errorAprobacion()" />
+              <app-aviso tipo="info" [mensaje]="prestamoCreado() ? 'Préstamo aprobado correctamente.' : null" />
+              <button
+                type="button"
+                (click)="aprobar()"
+                [disabled]="aprobando() || !clienteConforme() || prestamoCreado() !== null"
+                class="mt-4 rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {{ aprobando() ? 'Aprobando...' : 'Aprobar préstamo' }}
+              </button>
+              @if (prestamoCreado()) {
+                <p class="mt-2 text-xs text-emerald-800">Código del préstamo: {{ prestamoCreado() }}</p>
+              }
+            </div>
+          }
         </section>
       }
     </div>
@@ -118,8 +156,12 @@ export class PrestamoNuevo {
   protected readonly evaluacion = signal<EvaluacionPrestamo | null>(null);
   protected readonly errorBusqueda = signal<string | null>(null);
   protected readonly errorEvaluacion = signal<string | null>(null);
+  protected readonly errorAprobacion = signal<string | null>(null);
   protected readonly buscando = signal(false);
   protected readonly evaluando = signal(false);
+  protected readonly aprobando = signal(false);
+  protected readonly clienteConforme = signal(false);
+  protected readonly prestamoCreado = signal<string | null>(null);
   protected readonly busquedaRealizada = signal(false);
 
   protected cambiarBusqueda(evento: Event): void {
@@ -132,12 +174,14 @@ export class PrestamoNuevo {
     this.monto.set((evento.target as HTMLInputElement).value);
     this.evaluacion.set(null);
     this.errorEvaluacion.set(null);
+    this.reiniciarAprobacion();
   }
 
   protected cambiarPlazo(evento: Event): void {
     this.plazo.set((evento.target as HTMLInputElement).value);
     this.evaluacion.set(null);
     this.errorEvaluacion.set(null);
+    this.reiniciarAprobacion();
   }
 
   protected async buscarCliente(): Promise<void> {
@@ -161,12 +205,14 @@ export class PrestamoNuevo {
     this.resultados.set([]);
     this.evaluacion.set(null);
     this.errorEvaluacion.set(null);
+    this.reiniciarAprobacion();
   }
 
   protected quitarCliente(): void {
     this.clienteSeleccionado.set(null);
     this.evaluacion.set(null);
     this.errorEvaluacion.set(null);
+    this.reiniciarAprobacion();
   }
 
   protected puedeEvaluar(): boolean {
@@ -183,6 +229,7 @@ export class PrestamoNuevo {
     this.evaluando.set(true);
     this.errorEvaluacion.set(null);
     this.evaluacion.set(null);
+    this.reiniciarAprobacion();
     try {
       this.evaluacion.set(await this.prestamos.evaluar({ p_cliente: cliente.id, p_monto: monto, p_plazo: plazo }));
     } catch (error) {
@@ -192,8 +239,48 @@ export class PrestamoNuevo {
     }
   }
 
+  protected cambiarConformidad(evento: Event): void {
+    this.clienteConforme.set((evento.target as HTMLInputElement).checked);
+    this.errorAprobacion.set(null);
+  }
+
+  protected async aprobar(): Promise<void> {
+    const cliente = this.clienteSeleccionado();
+    const informe = this.evaluacion();
+    const monto = Number(this.monto());
+    const plazo = Number(this.plazo());
+    if (!cliente || !informe?.aprobable || !this.clienteConforme() || this.aprobando()) return;
+
+    this.aprobando.set(true);
+    this.errorAprobacion.set(null);
+    try {
+      this.prestamoCreado.set(
+        await this.prestamos.aprobar({
+          p_cliente: cliente.id,
+          p_monto: monto,
+          p_plazo: plazo,
+          p_cliente_conforme: true,
+        }),
+      );
+    } catch (error) {
+      this.errorAprobacion.set(mensajeDeError(error));
+    } finally {
+      this.aprobando.set(false);
+    }
+  }
+
+  private reiniciarAprobacion(): void {
+    this.clienteConforme.set(false);
+    this.prestamoCreado.set(null);
+    this.errorAprobacion.set(null);
+  }
+
   protected montoTexto(valor: number | null): string {
     return valor === null ? '—' : formatearMonto(valor);
+  }
+
+  protected montoSolicitado(): number {
+    return Number(this.monto());
   }
 
   protected fechaTexto(valor: string | null): string {
