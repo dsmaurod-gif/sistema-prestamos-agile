@@ -92,7 +92,7 @@ import { PrestamosService } from '../services/prestamos.service';
           }
 
           <dl class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Estado del cliente</dt><dd class="mt-1 font-medium text-slate-900">{{ nombreEstado(informe.estado_cliente) }}</dd></div>
+            <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Estado del cliente</dt><dd class="mt-1"><span class="rounded-full px-2.5 py-1 text-xs font-semibold" [class]="estadoClase(informe.estado_cliente)">{{ nombreEstado(informe.estado_cliente) }}</span></dd></div>
             <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Capital vigente</dt><dd class="mt-1 font-medium text-slate-900">{{ montoTexto(informe.capital_vigente) }}</dd></div>
             <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Disponible</dt><dd class="mt-1 font-medium text-slate-900">{{ montoTexto(informe.disponible) }}</dd></div>
             <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Monto máximo</dt><dd class="mt-1 font-medium text-slate-900">{{ montoTexto(informe.monto_maximo) }}</dd></div>
@@ -289,5 +289,13 @@ export class PrestamoNuevo {
 
   protected nombreEstado(estado: Cliente['estado']): string {
     return { AL_DIA: 'Al día', MOROSO: 'Moroso', EXTRAJUDICIAL: 'Extrajudicial' }[estado];
+  }
+
+  protected estadoClase(estado: Cliente['estado']): string {
+    return {
+      AL_DIA: 'bg-emerald-100 text-emerald-800',
+      MOROSO: 'bg-amber-100 text-amber-900',
+      EXTRAJUDICIAL: 'bg-red-100 text-red-800',
+    }[estado];
   }
 }
