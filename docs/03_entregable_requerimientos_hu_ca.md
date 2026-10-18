@@ -1,6 +1,6 @@
 # Sistema de Gestión de Préstamos — Requerimientos, Historias de Usuario y Criterios de Aceptación
 
-**Curso:** Agile Development · **Marco:** Scrum · **Versión:** 1.3 · **Fecha:** 17/10/2026
+**Curso:** Agile Development · **Marco:** Scrum · **Versión:** 1.3.1 · **Fecha:** 17/10/2026
 **Alcance de este documento:** requerimientos, historias de usuario y criterios de aceptación del MVP (Sprint 1). Los pagos (HU-18 a HU-22) quedan para el Sprint 2. Los cambios de la v1.3 están en el registro de cambios al final.
 
 ## 1. Requerimientos
@@ -65,7 +65,7 @@ Prioridad MoSCoW: **M** Must · **S** Should · **C** Could.
 | RF-13 | Generar el cronograma al aprobar (n cuotas, vencimiento cada 30 días, capital, interés, cuota, saldo). | RN-10, RN-11 | M | MVP |
 | RF-14 | Imprimir/descargar contrato y cronograma (PDF). | RN-10 | M | MVP |
 | RF-15 | Listar préstamos con filtros (cliente, estado, sede) y ver detalle. | — | M | MVP |
-| RF-16 | Recalcular estados Al día / Moroso / Extrajudicial automáticamente (a diario y al consultar). | RN-18, RN-20 | M | MVP |
+| RF-16 | Recalcular estados Al día / Moroso / Extrajudicial al consultar al cliente y mediante `fn_actualizar_estados` (botón del panel de demostración); no hay tarea programada en el MVP. | RN-18, RN-20 | M | MVP |
 | RF-17 | Bloquear nuevos préstamos a Morosos y Extrajudiciales. | RN-19, RN-21 | M | MVP |
 | RF-18 | Reporte de Morosos y Extrajudiciales (deuda vencida, mora acumulada, total a regularizar, días de atraso, último pago) con exportación CSV para la empresa de cobranza. | RN-21 | S | MVP |
 | RF-19 | Bitácora de auditoría de operaciones críticas (crear cliente, evaluar y aprobar préstamo, cambios de estado), visible en una pantalla de solo lectura. | RN-01 | S | MVP |
@@ -219,7 +219,7 @@ Como prestamista, quiero que el límite de 10,000 se controle sobre el capital v
 Como prestamista, quiero que un cliente pase a Moroso al no pagar su cuota, para controlar el riesgo sin intervención manual.
 - **CA1** Dada una cuota Pendiente con vencimiento el día 30, cuando llega el día 31 sin pago, entonces el cliente pasa a **Moroso** y la cuota a **Vencida**.
 - **CA2** Dado que paga (o aún es el día de vencimiento), entonces sigue **Al día**.
-- **CA3** El cambio ocurre automáticamente (tarea diaria) y también se reevalúa al consultar al cliente.
+- **CA3** El estado se recalcula al consultar al cliente y mediante fn_actualizar_estados (botón del panel de demostración); no hay tarea programada en el MVP.
 - **CA4** Se registra la fecha en que pasó a Moroso.
 - **CA5** Con varios préstamos, basta una cuota vencida para que sea Moroso.
 
@@ -301,6 +301,9 @@ Como trabajadora, quiero registrar el pago de una cuota, para actualizar la deud
 ---
 
 ## Registro de cambios
+
+**1.3.1 (17/10/2026)**
+- RF-16 y HU-12 CA3: el estado se recalcula al consultar al cliente y con `fn_actualizar_estados` (botón del panel de demostración); no hay tarea programada (`pg_cron`) en el MVP.
 
 **1.3 (17/10/2026)**
 - RN-07 y HU-11 (CA1, CA3, CA4, CA7, CA8): liberación de cupo **AL_CANCELAR** como regla vigente, con la respuesta del profesor. El caso de 10,000 a 2 años queda como "por confirmar".
