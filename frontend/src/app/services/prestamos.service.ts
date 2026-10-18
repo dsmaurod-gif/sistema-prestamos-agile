@@ -13,6 +13,11 @@ import {
 } from '../core/contrato';
 import { AuthService } from './auth.service';
 
+export interface PrestamoContrato extends PrestamoDetalle {
+  sedes: { nombre: string } | null;
+  trabajadores: { nombre: string } | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PrestamosService {
   private readonly db = inject(SUPABASE);
@@ -36,6 +41,18 @@ export class PrestamosService {
     return resultado(
       await this.db.from('prestamos').select('*, clientes(*), cuotas(*)').eq('id', id).single(),
     );
+  }
+
+   async obtenerContrato(id: Uuid): Promise<PrestamoContrato> {
+    const prestamo = resultado(
+      await this.db
+        .from('prestamos')
+        .select('*, clientes(*), cuotas(*), sedes(nombre), trabajadores(nombre)')
+        .eq('id', id)
+        .single(),
+    ) as unknown as PrestamoContrato; // PostgREST devuelve cada relación como objeto
+    prestamo.cuotas.sort((a, b) => a.numero - b.numero);
+    return prestamo;
   }
 
   /** Préstamos de un cliente, del más reciente al más antiguo. */
