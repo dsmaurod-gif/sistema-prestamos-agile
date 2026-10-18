@@ -96,3 +96,30 @@ Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 | **D** | HU-09, HU-15, HU-16, HU-17 | `PrestamosService.obtener` (contrato), `ReportesService.morosos / porSede / sedes / listarBitacora` |
 
 Cada quien trabaja solo en su página de `pages/`; los tipos viven en `core/contrato.ts` y cualquier cambio de firma lo coordina A.
+
+### Cobertura por historia
+
+Responsable de la **pantalla** (A, B, C o D, según el reparto de arriba) y cómo se cubre cada historia. Los T-xx están en `docs/02_plan_de_trabajo.md` §7. Los pares de QA son una propuesta: quien verifica no es quien construyó.
+
+| HU | Pantalla | Cobertura / casos de prueba |
+|---|---|---|
+| HU-01 Login | A | T-17 |
+| HU-02 Sedes y trabajadoras | A (sin pantalla; gestión de usuarios es Could) | Cubierta en BD (`sql/03_seed_base.sql`: 5 sedes y 1 trabajadora por sede + 1 administrador; vínculo con Auth en `sql/07_vincular_auth.sql`), verificada en QA por **B**. T-27 (solo ADMIN ve el reporte por sede) y T-21. Comprobado en Supabase el 17/10: las 5 sedes tienen al menos una trabajadora activa |
+| HU-03 Registrar cliente (DNI / RUC) | B | T-01, T-02, T-03, T-18, T-23, T-28, T-29 |
+| HU-04 Documentos no permitidos | B | T-04 |
+| HU-05 Buscar y ver cliente | B | T-02 |
+| HU-06 Evaluar solicitud | C | T-05, T-06, T-07, T-09, T-16 |
+| HU-07 Aprobar préstamo | C | T-15, T-24 |
+| HU-08 Cronograma | C | T-10, T-11 |
+| HU-09 Contrato imprimible | D | T-19 |
+| HU-10 Listar préstamos | C | — (ver detalle y cronograma en pantalla) |
+| HU-11 Límite global y liberación de cupo | C (informe y ficha muestran capital vigente y disponible) | Cubierta en BD (`fn_capital_vigente` en `sql/02_funciones.sql`, modo `AL_CANCELAR` fijado en `sql/08_ajustes_v1_3.sql`), verificada en QA por **C**. T-05, T-06, T-07, T-08, T-22, T-26, T-32 |
+| HU-12 Moroso automático | A (botón en el panel de demostración) | Cubierta en BD (`fn_actualizar_estados`, `sql/02_funciones.sql`), verificada en QA por **D**. T-13. El recálculo es al consultar o con el botón; no hay tarea programada |
+| HU-13 Bloqueo de nuevos préstamos | C (mensaje en evaluación y aprobación) | Cubierta en BD (`fn_evaluar_prestamo_calc` y `fn_aprobar_prestamo`, `sql/08_ajustes_v1_3.sql`), verificada en QA por **B**. T-12 |
+| HU-14 Extrajudicial automático | D (aparece en el reporte de morosos) | Cubierta en BD (`fn_actualizar_estados`, `sql/02_funciones.sql`), verificada en QA por **D**. T-14 |
+| HU-15 Reporte de morosos | D | T-12, T-14 (cliente en la lista) |
+| HU-16 Auditoría | D (pantalla de bitácora) | T-30, T-31 |
+| HU-17 Reporte por sede | D | T-21, T-27 |
+| HU-23 Mora por día | B (vista en la ficha) | T-25 |
+| HU-T1 Modo demostración | A | T-13, T-14, T-20 |
+
