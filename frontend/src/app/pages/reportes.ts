@@ -3,20 +3,21 @@ import { Aviso } from '../components/aviso';
 import { Sede } from '../core/contrato';
 import { mensajeDeError } from '../core/supabase';
 import { ReportesService } from '../services/reportes.service';
+import { Bitacora } from './reportes/bitacora';
 import { ReporteMorosos } from './reportes/morosos';
 import { ReportePorSede } from './reportes/por-sede';
 
-type Pestana = 'morosos' | 'sedes';
+type Pestana = 'morosos' | 'sedes' | 'bitacora';
 
 const PESTANAS: { id: Pestana; texto: string }[] = [
   { id: 'morosos', texto: 'Morosos y extrajudiciales' },
   { id: 'sedes', texto: 'Por sede' },
+  { id: 'bitacora', texto: 'Bitácora' },
 ];
 
-// HU-15 Reporte de morosos (CSV) · HU-17 Reporte por sede. Solo ADMIN (rolGuard).
 @Component({
   selector: 'app-pagina-reportes',
-  imports: [Aviso, ReporteMorosos, ReportePorSede],
+  imports: [Aviso, ReporteMorosos, ReportePorSede, Bitacora],
   template: `
     <h1 class="text-2xl font-semibold text-slate-900">Reportes</h1>
 
@@ -50,6 +51,9 @@ const PESTANAS: { id: Pestana; texto: string }[] = [
         }
         @case ('sedes') {
           <app-reporte-por-sede />
+        }
+        @case ('bitacora') {
+          <app-bitacora [sedes]="sedes()" />
         }
       }
     </section>
