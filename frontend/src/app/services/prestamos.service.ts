@@ -8,6 +8,7 @@ import {
   PrestamoConCuotas,
   PrestamoDetalle,
   PrestamoListado,
+  Sede,
   Uuid,
 } from '../core/contrato';
 import { AuthService } from './auth.service';
@@ -64,5 +65,10 @@ export class PrestamosService {
         .limit(limite),
     );
     return filas as unknown as PrestamoListado[]; // PostgREST devuelve cada relación como objeto
+  }
+
+  /** Lista todas las sedes disponibles para el filtro de préstamos. */
+  async listarSedes(): Promise<Sede[]> {
+    return resultado(await this.db.from('sedes').select('id, nombre, ciudad').order('nombre'));
   }
 }
