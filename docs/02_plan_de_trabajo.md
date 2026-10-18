@@ -70,7 +70,7 @@ Prioridad: **rápido de construir, reglas en BD, desplegado en línea.**
 
 | Capa | Sugerencia | Por qué |
 |---|---|---|
-| Base de datos y auth | PostgreSQL con Supabase (Auth + RLS + funciones SQL) | Reglas críticas como funciones/constraints; tarea diaria con `pg_cron` |
+| Base de datos y auth | PostgreSQL con Supabase (Auth + RLS + funciones SQL) | Reglas críticas como funciones/constraints; el estado se recalcula al consultar al cliente y con fn_actualizar_estados (botón del panel de demostración); la tarea programada diaria queda como mejora futura |
 | Frontend | Angular (o React) | Formularios, validaciones, tablas |
 | Validación de identidad | API de consulta DNI de un tercero (verificar términos y cuota gratuita) llamada desde servidor/Edge Function | Nombre correcto (RN-03) sin exponer la llave |
 | PDF del contrato | Generación en cliente (jsPDF o impresión HTML) | Simple y rápido |
@@ -295,6 +295,9 @@ Relato: *"Soy la asesora de la sede Trujillo. Llega un cliente…"*
 6. Pantalla de administración (HU-02 completa) y panel del prestamista (HU-17).
 
 ## Registro de cambios
+
+**1.3.1 (17/10/2026)**
+- Stack recomendado: se quita la tarea diaria con `pg_cron`; el estado se recalcula al consultar al cliente y con `fn_actualizar_estados` (consistente con HU-12 CA3 v1.3.1).
 
 **1.3 (17/10/2026)**
 - Nuevo reparto: A (login, demo, Edge Functions, despliegue, script 08, RLS), B (HU-03 con DNI/RUC, HU-04, HU-05, HU-23 vista), C (HU-06, 07, 08, 10), D (HU-09, 15, 16, 17).
