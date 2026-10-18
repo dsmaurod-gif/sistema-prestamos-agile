@@ -247,6 +247,7 @@ export class Prestamos implements OnInit {
   protected seleccionarCliente(cliente: Cliente): void {
     this.clienteFiltro.set(cliente);
     this.resultadosClientes.set([]);
+    void this.cargarPrestamos();
   }
 
   protected quitarCliente(): void {
@@ -280,7 +281,7 @@ export class Prestamos implements OnInit {
   }
 
   protected porcentaje(valor: number): string {
-    return `${Number(valor).toFixed(2)}%`;
+    return `${(Number(valor) * 100).toFixed(2)}%`;
   }
 
   protected estado(estado: EstadoPrestamo): string {
