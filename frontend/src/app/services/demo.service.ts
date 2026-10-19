@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { resultado, rpc, SUPABASE } from '../core/supabase';
+import { ErrorBaseDatos, resultado, rpc, SUPABASE } from '../core/supabase';
 import {
   FechaISO,
   Parametro,
@@ -28,12 +28,24 @@ export class DemoService {
     return resultado(await this.db.from('parametros').select('clave, valor, nota').order('clave'));
   }
 
-  /** Fija la fecha simulada ('AAAA-MM-DD'); con '' se vuelve a la fecha real. */
+  /**
+   * Fija la fecha simulada ('AAAA-MM-DD'); con '' se vuelve a la fecha real.
+   * Comprueba que la base modificó el registro y deja en la señal el valor realmente guardado.
+   */
   async fijarFechaReferencia(fecha: FechaISO): Promise<void> {
-    resultado(
-      await this.db.from('parametros').update({ valor: fecha }).eq('clave', 'fecha_referencia'),
+    const filas = resultado<Pick<Parametro, 'valor'>[]>(
+      await this.db
+        .from('parametros')
+        .update({ valor: fecha })
+        .eq('clave', 'fecha_referencia')
+        .select('valor'),
     );
-    this.fecha.set(fecha);
+    if (filas.length !== 1) {
+      throw new ErrorBaseDatos(
+        'No se pudo actualizar la fecha de referencia: la base no modificó ningún registro.',
+      );
+    }
+    await this.cargarFechaReferencia();
   }
 
   async volverAFechaReal(): Promise<void> {

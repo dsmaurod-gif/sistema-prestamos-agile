@@ -98,7 +98,7 @@ const PARAMETROS: ConfigParametro[] = [
         <button
           type="button"
           (click)="volverAFechaReal()"
-          [disabled]="ocupado() || !fechaActual()"
+          [disabled]="ocupado()"
           class="rounded border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Volver a la fecha real
@@ -218,7 +218,7 @@ export class Demo implements OnInit {
     await this.ejecutar(async () => {
       await this.demo.fijarFechaReferencia(fecha);
       this.exito.set(
-        `Fecha simulada fijada en ${formatearFecha(fecha)}. Pulsa «Actualizar estados ahora» para ver los cambios.`,
+        `Fecha simulada fijada en ${formatearFecha(fecha)}. Pulsa «Actualizar estados ahora» para ver los cambios. Los estados ya recalculados no se revierten; usa «Reiniciar datos de demostración» para deshacerlos.`,
       );
     });
   }
@@ -226,8 +226,10 @@ export class Demo implements OnInit {
   protected async volverAFechaReal(): Promise<void> {
     await this.ejecutar(async () => {
       await this.demo.volverAFechaReal();
-      this.fecha.set('');
-      this.exito.set('El sistema vuelve a usar la fecha real.');
+      this.fecha.set(this.fechaActual());
+      this.exito.set(
+        'El sistema vuelve a usar la fecha real. Los estados ya recalculados no se revierten; usa «Reiniciar datos de demostración» para deshacerlos.',
+      );
     });
   }
 
