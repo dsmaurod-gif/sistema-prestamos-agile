@@ -56,9 +56,11 @@ const PARAMETROS: ConfigParametro[] = [
   template: `
     <h1 class="text-2xl font-semibold text-slate-900">Modo demostración</h1>
     <p class="mt-1 text-sm text-slate-600">
-      Solo para la presentación. Al avanzar la fecha, las cuotas pasan a vencidas y los clientes a
-      Moroso o Extrajudicial; esos cambios no se revierten al volver atrás. Para empezar de cero se
-      reinician los datos demo desde Supabase.
+      Solo para la presentación. Los cambios de fecha y de estados afectan a todos los usuarios del
+      sistema: al avanzar la fecha, las cuotas pasan a vencidas y los clientes a Moroso o
+      Extrajudicial, y eso no se revierte al volver atrás. Todo se deshace con «Reiniciar datos de
+      demostración» (más abajo), que borra los cambios de todos los usuarios y deja los datos como
+      al inicio.
     </p>
 
     <div class="mt-4 space-y-2">
@@ -143,6 +145,48 @@ const PARAMETROS: ConfigParametro[] = [
         {{ ocupado() ? 'Procesando…' : 'Actualizar estados ahora' }}
       </button>
     </section>
+
+    <section class="mt-6 rounded-md border border-red-200 bg-white p-4">
+      <h2 class="font-semibold text-slate-900">Reiniciar datos de demostración</h2>
+      <p class="mt-1 text-sm text-slate-600">
+        Borra todos los clientes, préstamos y cuotas, vuelve a cargar los 7 clientes demo y deja el
+        sistema con la fecha real. No cambia los parámetros de arriba ni la bitácora.
+      </p>
+      @if (!confirmandoReinicio()) {
+        <button
+          type="button"
+          (click)="pedirConfirmacion()"
+          [disabled]="ocupado() || !cargado()"
+          class="mt-3 rounded border border-red-300 px-4 py-2 text-sm font-medium text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Reiniciar datos de demostración
+        </button>
+      } @else {
+        <div class="mt-3 rounded border border-red-300 bg-red-50 p-3" role="alertdialog">
+          <p class="text-sm font-medium text-red-900">
+            Esto borra los cambios de todos los usuarios y deja los datos demo como al inicio.
+          </p>
+          <div class="mt-3 flex flex-wrap gap-3">
+            <button
+              type="button"
+              (click)="reiniciarDatos()"
+              [disabled]="ocupado()"
+              class="rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ ocupado() ? 'Reiniciando…' : 'Sí, reiniciar' }}
+            </button>
+            <button
+              type="button"
+              (click)="cancelarReinicio()"
+              [disabled]="ocupado()"
+              class="rounded border border-slate-300 bg-white px-4 py-2 text-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      }
+    </section>
   `,
 })
 export class Demo implements OnInit {
@@ -157,6 +201,7 @@ export class Demo implements OnInit {
   protected readonly ocupado = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly exito = signal<string | null>(null);
+  protected readonly confirmandoReinicio = signal(false);
 
   async ngOnInit(): Promise<void> {
     await this.ejecutar(async () => {
@@ -207,6 +252,27 @@ export class Demo implements OnInit {
     await this.ejecutar(async () => {
       await this.demo.actualizarEstados();
       this.exito.set('Estados actualizados con la fecha actual del sistema.');
+    });
+  }
+
+  protected pedirConfirmacion(): void {
+    this.error.set(null);
+    this.exito.set(null);
+    this.confirmandoReinicio.set(true);
+  }
+
+  protected cancelarReinicio(): void {
+    this.confirmandoReinicio.set(false);
+  }
+
+  protected async reiniciarDatos(): Promise<void> {
+    await this.ejecutar(async () => {
+      const resumen = await this.demo.reiniciarDatos();
+      this.fecha.set('');
+      this.confirmandoReinicio.set(false);
+      this.exito.set(
+        `Datos de demostración reiniciados: ${resumen.clientes} clientes, ${resumen.prestamos} préstamos y ${resumen.cuotas} cuotas. El sistema usa la fecha real.`,
+      );
     });
   }
 
