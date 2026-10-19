@@ -82,6 +82,8 @@ const PARAMETROS: ConfigParametro[] = [
           <input
             type="date"
             name="fecha"
+            min="2000-01-01"
+            max="2100-12-31"
             [(ngModel)]="fecha"
             [disabled]="ocupado()"
             class="mt-1 block rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100"
@@ -90,7 +92,7 @@ const PARAMETROS: ConfigParametro[] = [
         <button
           type="button"
           (click)="fijarFecha()"
-          [disabled]="ocupado() || !fecha()"
+          [disabled]="ocupado() || !fechaEnRango()"
           class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Fijar fecha simulada
@@ -211,6 +213,12 @@ export class Demo implements OnInit {
       this.fecha.set(this.fechaActual());
       this.cargado.set(true);
     });
+  }
+
+  /** Fecha escrita y dentro de 2000-01-01 a 2100-12-31 (evita años de 6 dígitos). */
+  protected fechaEnRango(): boolean {
+    const fecha = this.fecha();
+    return /^\d{4}-\d{2}-\d{2}$/.test(fecha) && fecha >= '2000-01-01' && fecha <= '2100-12-31';
   }
 
   protected async fijarFecha(): Promise<void> {
