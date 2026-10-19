@@ -3,6 +3,20 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Aviso } from '../components/aviso';
 import { EstadoCliente } from '../core/contrato';
+import { formatearFecha } from '../core/formato';
+import {
+  errorDni,
+  errorRuc,
+  errorTelefono,
+  hoyISO,
+  limpiarCampo,
+  limpiarNombre,
+  limpiarTelefono,
+  limpiarTexto,
+  soloDigitos,
+  sumarAnios,
+  telefonoValido,
+} from '../core/validaciones';
 import { mensajeDeError } from '../core/supabase';
 import { ClientesService } from '../services/clientes.service';
 
@@ -78,6 +92,7 @@ interface FilaCliente {
               name="q"
               [(ngModel)]="queryBuscar"
               placeholder="DNI, nombre o apellido…"
+              maxlength="60"
               autocomplete="off"
               [disabled]="cargandoBuscar()"
               class="flex-1 rounded border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none disabled:bg-slate-50"
@@ -201,15 +216,18 @@ interface FilaCliente {
                 <label class="block text-sm font-medium text-slate-700" for="inp-ruc">
                   Número de RUC <span class="text-slate-400">(11 dígitos, inicia con 10 o 20)</span>
                 </label>
-                <input id="inp-ruc" type="text" name="ruc" [(ngModel)]="rucInput"
+                <input id="inp-ruc" type="text" name="ruc" [value]="rucInput"
+                  (input)="rucInput = limpiarCampo($event, limpiarRuc)"
+                  inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                   maxlength="11" placeholder="20601030013" [disabled]="cargandoReg()"
                   class="mt-1 block w-full rounded border border-slate-300 px-3 py-2 font-mono text-slate-900 disabled:bg-slate-50" />
+                @if (errorRuc(rucInput); as e) { <p class="mt-0.5 text-xs text-red-600">{{ e }}</p> }
               </div>
               <div class="flex gap-2">
                 <button type="button" (click)="reiniciarReg()"
                   class="flex-1 rounded border border-slate-300 py-2 text-sm text-slate-700 hover:bg-slate-50">← Atrás</button>
                 <button id="btn-consultar-ruc" type="submit"
-                  [disabled]="cargandoReg() || rucInput.length < 11"
+                  [disabled]="cargandoReg() || rucInput.length < 11 || !!errorRuc(rucInput)"
                   class="flex-1 rounded bg-slate-900 py-2 text-sm font-medium text-white disabled:opacity-50">
                   {{ cargandoReg() ? 'Consultando…' : 'Consultar SUNAT' }}
                 </button>
@@ -236,7 +254,9 @@ interface FilaCliente {
                   DNI del cliente <span class="text-slate-400">(8 dígitos)</span>
                 </label>
                 <div class="mt-1 flex gap-2">
-                  <input id="inp-dni" type="text" name="dni" [(ngModel)]="dniInput"
+                  <input id="inp-dni" type="text" name="dni" [value]="dniInput"
+                    (input)="dniInput = limpiarCampo($event, limpiarDni)"
+                    inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                     maxlength="8" placeholder="12345678" [disabled]="cargandoReg()"
                     class="flex-1 rounded border border-slate-300 px-3 py-2 font-mono text-slate-900 disabled:bg-slate-50" />
                   <button id="btn-consultar-dni" type="submit"
@@ -245,6 +265,7 @@ interface FilaCliente {
                     {{ cargandoReg() ? '…' : 'Consultar' }}
                   </button>
                 </div>
+                @if (errorDni(dniInput); as e) { <p class="mt-0.5 text-xs text-red-600">{{ e }}</p> }
               </div>
             </form>
 
@@ -267,13 +288,17 @@ interface FilaCliente {
                 <p class="text-sm font-semibold text-amber-900">⚠ Servicio de consulta DNI no disponible. Puede registrar manualmente.</p>
                 <div>
                   <label class="block text-xs font-medium text-amber-800" for="inp-nombres-manual">Nombres completos</label>
-                  <input id="inp-nombres-manual" type="text" name="nombresManual" [(ngModel)]="nombresManual"
+                  <input id="inp-nombres-manual" type="text" name="nombresManual" [value]="nombresManual"
+                    (input)="nombresManual = limpiarCampo($event, limpiarNombres)"
+                    maxlength="80" autocomplete="off"
                     placeholder="NOMBRES APELLIDO APELLIDO"
                     class="mt-1 block w-full rounded border border-amber-300 bg-white px-3 py-2 text-sm uppercase" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-amber-800" for="inp-nombres-conf">Confirmar nombres</label>
-                  <input id="inp-nombres-conf" type="text" name="nombresConf" [(ngModel)]="nombresManualConf"
+                  <input id="inp-nombres-conf" type="text" name="nombresConf" [value]="nombresManualConf"
+                    (input)="nombresManualConf = limpiarCampo($event, limpiarNombres)"
+                    maxlength="80" autocomplete="off"
                     placeholder="NOMBRES APELLIDO APELLIDO"
                     class="mt-1 block w-full rounded border border-amber-300 bg-white px-3 py-2 text-sm uppercase" />
                 </div>
@@ -321,9 +346,11 @@ interface FilaCliente {
                   Fecha de caducidad del DNI <span class="text-red-500">*</span>
                 </label>
                 <input id="inp-caducidad" type="date" name="caducidad" [(ngModel)]="caducidad"
+                  [min]="hoy" [max]="maxCaducidad"
                   [disabled]="cargandoReg()"
                   class="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-slate-900 disabled:bg-slate-50" />
-                <p class="mt-0.5 text-xs text-slate-400">Si el DNI ya caducó o no se indica, no se puede registrar.</p>
+                <p class="mt-0.5 text-xs text-slate-400">Léela del DNI físico del cliente; la consulta a RENIEC no la proporciona.</p>
+                @if (errorCaducidad(); as e) { <p class="mt-0.5 text-xs text-red-600">{{ e }}</p> }
               </div>
 
               <!-- Teléfono (CA8) -->
@@ -331,10 +358,13 @@ interface FilaCliente {
                 <label class="block text-sm font-medium text-slate-700" for="inp-telefono">
                   Teléfono <span class="text-red-500">*</span>
                 </label>
-                <input id="inp-telefono" type="tel" name="telefono" [(ngModel)]="telefono"
+                <input id="inp-telefono" type="tel" name="telefono" [value]="telefono"
+                  (input)="telefono = limpiarCampo($event, limpiarTelefono)"
+                  inputmode="numeric" pattern="9[0-9]{8}" maxlength="9" autocomplete="tel-national"
                   placeholder="987654321" [disabled]="cargandoReg()"
                   class="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-slate-900 disabled:bg-slate-50" />
-                <p class="mt-0.5 text-xs text-slate-400">Obligatorio para contacto de cobranza.</p>
+                <p class="mt-0.5 text-xs text-slate-400">Obligatorio para contacto de cobranza. 9 dígitos, empieza con 9.</p>
+                @if (errorTelefono(telefono); as e) { <p class="mt-0.5 text-xs text-red-600">{{ e }}</p> }
               </div>
 
               <!-- Dirección (opcional, CA8) -->
@@ -342,7 +372,9 @@ interface FilaCliente {
                 <label class="block text-sm font-medium text-slate-700" for="inp-direccion">
                   Dirección <span class="text-slate-400">(opcional)</span>
                 </label>
-                <input id="inp-direccion" type="text" name="direccion" [(ngModel)]="direccion"
+                <input id="inp-direccion" type="text" name="direccion" [value]="direccion"
+                  (input)="direccion = limpiarCampo($event, limpiarDireccion)"
+                  maxlength="120" autocomplete="street-address"
                   [disabled]="cargandoReg()"
                   class="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-slate-900 disabled:bg-slate-50" />
               </div>
@@ -353,7 +385,7 @@ interface FilaCliente {
                   Cancelar
                 </button>
                 <button id="btn-registrar-cliente" type="submit"
-                  [disabled]="cargandoReg() || !caducidad || !telefono.trim()"
+                  [disabled]="cargandoReg() || !caducidad || !!errorCaducidad() || !telefonoValido(telefono)"
                   class="flex-1 rounded bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">
                   {{ cargandoReg() ? 'Registrando…' : 'Registrar cliente' }}
                 </button>
@@ -437,6 +469,20 @@ export class Clientes {
   protected readonly modoRegistro = signal<ModoRegistro>('DNI');
 
   // Inputs
+  // Validación de comodidad en los campos (la base de datos sigue siendo la autoridad)
+  protected readonly limpiarCampo = limpiarCampo;
+  protected readonly errorDni = errorDni;
+  protected readonly errorRuc = errorRuc;
+  protected readonly errorTelefono = errorTelefono;
+  protected readonly telefonoValido = telefonoValido;
+  protected readonly limpiarTelefono = limpiarTelefono;
+  protected readonly limpiarDni = (valor: string): string => soloDigitos(valor, 8);
+  protected readonly limpiarRuc = (valor: string): string => soloDigitos(valor, 11);
+  protected readonly limpiarNombres = (valor: string): string => limpiarNombre(valor, 80);
+  protected readonly limpiarDireccion = (valor: string): string => limpiarTexto(valor, 120);
+  protected readonly hoy = hoyISO();
+  protected readonly maxCaducidad = sumarAnios(hoyISO(), 20);
+
   protected tipoDoc: TipoDocumento = 'DNI';
   protected dniInput = '';
   protected rucInput = '';
@@ -463,6 +509,18 @@ export class Clientes {
   protected readonly cargandoReg = signal(false);
   protected readonly errorReg = signal<string | null>(null);
   protected readonly infoReg = signal<string | null>(null);
+
+  /** Mensaje si la fecha de caducidad no sirve (vencida o demasiado lejana); null si está bien o vacía. */
+  protected errorCaducidad(): string | null {
+    if (!this.caducidad) return null;
+    if (this.caducidad < this.hoy) {
+      return `El DNI está vencido (caducó el ${formatearFecha(this.caducidad)}): no se puede registrar a un cliente con el DNI caducado.`;
+    }
+    if (this.caducidad > this.maxCaducidad) {
+      return `La fecha de caducidad no puede ser posterior al ${formatearFecha(this.maxCaducidad)}.`;
+    }
+    return null;
+  }
 
   protected nombresFinales(): string {
     const api = this.nombreApi();
