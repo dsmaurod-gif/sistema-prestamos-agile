@@ -8,6 +8,7 @@ import {
   RespuestaConsultaRuc,
   Uuid,
 } from '../core/contrato';
+import { sinTildes } from '../core/validaciones';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -25,8 +26,10 @@ export class ClientesService {
 
   /** Busca por DNI exacto o por parte del nombre o apellido (máximo 20). */
   async buscar(texto: string): Promise<Cliente[]> {
-    // Quita los caracteres que romperían el filtro de PostgREST
-    const q = texto.trim().replace(/[,()"\\%*]/g, '');
+    // Sin tildes (los nombres se guardan sin ellas) y sin los caracteres que romperían el filtro de PostgREST
+    const q = sinTildes(texto)
+      .trim()
+      .replace(/[,()"\\%*]/g, '');
     if (!q) return [];
     return resultado(
       await this.db
@@ -40,7 +43,11 @@ export class ClientesService {
   /** Clientes más recientes (todas las sedes) para la lista inicial de la pantalla de clientes. */
   async listarRecientes(limite = 50): Promise<Cliente[]> {
     return resultado(
-      await this.db.from('clientes').select('*').order('creado_en', { ascending: false }).limit(limite),
+      await this.db
+        .from('clientes')
+        .select('*')
+        .order('creado_en', { ascending: false })
+        .limit(limite),
     );
   }
 
