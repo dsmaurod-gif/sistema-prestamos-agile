@@ -19,20 +19,22 @@ const PESTANAS: { id: Pestana; texto: string }[] = [
   selector: 'app-pagina-reportes',
   imports: [Aviso, ReporteMorosos, ReportePorSede, Bitacora],
   template: `
-    <h1 class="text-2xl font-semibold text-slate-900">Reportes</h1>
+    <header>
+      <p class="text-xs font-semibold uppercase tracking-widest text-vino-700">Administración</p>
+      <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Reportes</h1>
+      <p class="mt-1 text-slate-500">Morosidad, desempeño por sede y bitácora de auditoría.</p>
+    </header>
 
-    <div class="mt-4 flex flex-wrap gap-1 border-b border-slate-200" role="tablist">
+    <div class="mt-6 inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm" role="tablist">
       @for (p of pestanas; track p.id) {
         <button
           type="button"
           role="tab"
           [attr.aria-selected]="activa() === p.id"
           (click)="activa.set(p.id)"
-          class="-mb-px rounded-t border px-4 py-2 text-sm"
+          class="rounded-lg px-4 py-2 text-sm font-medium transition"
           [class]="
-            activa() === p.id
-              ? 'border-slate-200 border-b-white bg-white font-semibold text-slate-900'
-              : 'border-transparent text-slate-600 hover:text-slate-900'
+            activa() === p.id ? 'bg-vino-700 text-white shadow' : 'text-slate-600 hover:bg-vino-50 hover:text-vino-800'
           "
         >
           {{ p.texto }}
