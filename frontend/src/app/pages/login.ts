@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Aviso } from '../components/aviso';
 import { mensajeDeError } from '../core/supabase';
+import { correoValido } from '../core/validaciones';
 import { AuthService } from '../services/auth.service';
 
 // HU-01 Iniciar sesión.
@@ -12,7 +13,9 @@ import { AuthService } from '../services/auth.service';
   template: `
     <main class="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <h1 class="mb-1 text-2xl font-semibold text-slate-900">Iniciar sesión</h1>
-      <p class="mb-6 text-sm text-slate-600">Sistema de Préstamos · uso exclusivo de trabajadores</p>
+      <p class="mb-6 text-sm text-slate-600">
+        Sistema de Préstamos · uso exclusivo de trabajadores
+      </p>
 
       <form (ngSubmit)="entrar()" class="space-y-4" novalidate>
         <app-aviso [mensaje]="error()" />
@@ -23,6 +26,8 @@ import { AuthService } from '../services/auth.service';
             type="email"
             name="email"
             autocomplete="username"
+            inputmode="email"
+            maxlength="100"
             required
             [(ngModel)]="email"
             [disabled]="cargando()"
@@ -36,6 +41,7 @@ import { AuthService } from '../services/auth.service';
             type="password"
             name="password"
             autocomplete="current-password"
+            maxlength="128"
             required
             [(ngModel)]="password"
             [disabled]="cargando()"
@@ -73,6 +79,10 @@ export class Login implements OnInit {
     const email = this.email().trim();
     if (!email || !this.password()) {
       this.error.set('Ingresa tu correo y tu contraseña.');
+      return;
+    }
+    if (!correoValido(email)) {
+      this.error.set('Ingresa un correo con formato válido, por ejemplo nombre@dominio.com.');
       return;
     }
     this.cargando.set(true);

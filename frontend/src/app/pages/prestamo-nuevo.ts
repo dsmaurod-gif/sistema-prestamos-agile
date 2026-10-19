@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Cliente, EvaluacionPrestamo } from '../core/contrato';
 import { formatearFecha, formatearMonto } from '../core/formato';
 import { mensajeDeError } from '../core/supabase';
+import { bloquearNoEnteros, limpiarCampo, limpiarMonto, soloDigitos } from '../core/validaciones';
 import { Aviso } from '../components/aviso';
 import { ClientesService } from '../services/clientes.service';
 import { PrestamosService } from '../services/prestamos.service';
@@ -23,7 +24,7 @@ import { PrestamosService } from '../services/prestamos.service';
         <div class="mt-4 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
           <label class="block">
             <span class="text-sm font-medium text-slate-700">Buscar cliente por DNI o nombre</span>
-            <input type="search" [value]="busqueda()" (input)="cambiarBusqueda($event)" (keydown.enter)="buscarCliente()" placeholder="Ej. 70000001" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
+            <input type="search" maxlength="60" autocomplete="off" [value]="busqueda()" (input)="cambiarBusqueda($event)" (keydown.enter)="buscarCliente()" placeholder="Ej. 70000001" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
           </label>
           <button type="button" (click)="buscarCliente()" [disabled]="buscando() || !busqueda().trim()" class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
             {{ buscando() ? 'Buscando...' : 'Buscar' }}
@@ -58,11 +59,11 @@ import { PrestamosService } from '../services/prestamos.service';
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
           <label class="block">
             <span class="text-sm font-medium text-slate-700">Monto solicitado (S/)</span>
-            <input type="number" min="1" step="0.01" [value]="monto()" (input)="cambiarMonto($event)" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
+            <input type="text" inputmode="decimal" maxlength="9" autocomplete="off" placeholder="0.00" [value]="monto()" (input)="cambiarMonto($event)" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
           </label>
           <label class="block">
             <span class="text-sm font-medium text-slate-700">Plazo (meses)</span>
-            <input type="number" min="1" max="60" step="1" [value]="plazo()" (input)="cambiarPlazo($event)" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
+            <input type="number" min="1" max="60" step="1" inputmode="numeric" [value]="plazo()" (keydown)="bloquearTeclas($event)" (input)="cambiarPlazo($event)" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
             <span class="mt-1 block text-xs text-slate-500">Entre 1 y 60 meses.</span>
           </label>
         </div>
@@ -172,15 +173,17 @@ export class PrestamoNuevo {
     this.errorBusqueda.set(null);
   }
 
+  protected readonly bloquearTeclas = bloquearNoEnteros;
+
   protected cambiarMonto(evento: Event): void {
-    this.monto.set((evento.target as HTMLInputElement).value);
+    this.monto.set(limpiarCampo(evento, limpiarMonto));
     this.evaluacion.set(null);
     this.errorEvaluacion.set(null);
     this.reiniciarAprobacion();
   }
 
   protected cambiarPlazo(evento: Event): void {
-    this.plazo.set((evento.target as HTMLInputElement).value);
+    this.plazo.set(limpiarCampo(evento, (valor) => soloDigitos(valor, 2)));
     this.evaluacion.set(null);
     this.errorEvaluacion.set(null);
     this.reiniciarAprobacion();
