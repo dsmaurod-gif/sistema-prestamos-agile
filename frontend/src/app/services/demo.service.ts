@@ -1,6 +1,12 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { resultado, rpc, SUPABASE } from '../core/supabase';
-import { FechaISO, Parametro, ParametroEditable, Uuid } from '../core/contrato';
+import {
+  FechaISO,
+  Parametro,
+  ParametroEditable,
+  ResumenReinicioDemo,
+  Uuid,
+} from '../core/contrato';
 
 /** Modo demostración (solo ADMIN): fecha simulada y parámetros editables. */
 @Injectable({ providedIn: 'root' })
@@ -41,5 +47,15 @@ export class DemoService {
   /** fn_actualizar_estados → recalcula vencidas, Moroso y Extrajudicial; sin cliente = todos. */
   async actualizarEstados(clienteId: Uuid | null = null): Promise<void> {
     await rpc(this.db, 'fn_actualizar_estados', { p_cliente: clienteId });
+  }
+
+  /**
+   * sp_demo_reiniciar → borra clientes, préstamos y cuotas y recarga los datos demo.
+   * Solo ADMIN (la función lo comprueba). La fecha simulada vuelve a la real.
+   */
+  async reiniciarDatos(): Promise<ResumenReinicioDemo> {
+    const resumen = await rpc(this.db, 'sp_demo_reiniciar', {});
+    this.fecha.set('');
+    return resumen;
   }
 }

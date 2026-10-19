@@ -108,6 +108,13 @@ export interface ActualizarEstadosParams {
   p_cliente: Uuid | null;
 }
 
+/** Resultado de sp_demo_reiniciar: lo que quedó cargado. */
+export interface ResumenReinicioDemo {
+  clientes: number;
+  prestamos: number;
+  cuotas: number;
+}
+
 /** Cada función del contrato con sus parámetros y su respuesta. */
 export interface FuncionesRpc {
   fn_registrar_cliente: { params: RegistrarClienteParams; respuesta: Uuid };
@@ -118,6 +125,8 @@ export interface FuncionesRpc {
   fn_reporte_sedes: { params: ReporteSedesParams; respuesta: FilaReporteSedes[] };
   fn_actualizar_estados: { params: ActualizarEstadosParams; respuesta: null };
   fn_capital_vigente: { params: ClienteParams; respuesta: number };
+  /** Solo ADMIN: reinicia los datos de demostración (sql/09_demo_reiniciar.sql). */
+  sp_demo_reiniciar: { params: Record<string, never>; respuesta: ResumenReinicioDemo };
 }
 
 // ---------- Edge Function consultar-dni ----------
