@@ -92,3 +92,17 @@ export function hoyISO(): string {
 export function sumarAnios(fecha: string, anios: number): string {
   return `${Number(fecha.slice(0, 4)) + anios}${fecha.slice(4)}`;
 }
+
+/**
+ * Quita las tildes y diéresis (á, é, í, ó, ú, ü) para comparar nombres sin importar cómo se escribieron.
+ * La ñ se conserva: es otra letra ("PEÑA" no es "PENA").
+ */
+export function sinTildes(valor: string): string {
+  return valor
+    .replace(/ñ/g, '')
+    .replace(/Ñ/g, '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(//g, 'ñ')
+    .replace(//g, 'Ñ');
+}
