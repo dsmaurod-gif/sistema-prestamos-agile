@@ -42,9 +42,18 @@ body {
 }
 
 /* Foco visible y coherente en toda la aplicación */
-:focus-visible {
-  outline: 2px solid var(--color-vino-500);
-  outline-offset: 2px;
+/* En la capa base, para que las utilidades (outline-none en campos con borde propio) puedan quitarlo */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-vino-500);
+    outline-offset: 2px;
+  }
+}
+
+/* El navegador (Edge) dibuja su propio ojo en los campos de contraseña: se usa el del sistema */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
 }
 
 /* Entrada suave de cada paso o bloque. Sin fill-mode "forwards": al terminar no deja transform
