@@ -111,15 +111,6 @@ function menuColapsadoGuardado(): boolean {
           </a>
         }
       </nav>
-
-      <div class="border-t border-white/10 p-4" [class]="colapsado() ? 'lg:hidden' : ''">
-        <p class="text-xs leading-snug text-vino-200">
-          Controlamos hoy las oportunidades de mañana.
-        </p>
-        <p class="mt-2 text-[11px] uppercase tracking-wider text-vino-300">
-          Chimbote · Trujillo · Chiclayo · Piura · Tumbes
-        </p>
-      </div>
     </aside>
 
     <!-- ── Contenido ── -->
