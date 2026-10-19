@@ -61,6 +61,8 @@ import { AuthService } from '../services/auth.service';
                 name="email"
                 autocomplete="username"
                 inputmode="email"
+                spellcheck="false"
+                autocapitalize="off"
                 maxlength="100"
                 placeholder="nombre@dominio.com"
                 required
