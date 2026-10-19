@@ -1,87 +1,233 @@
-import { Component, inject, Input, OnInit, signal } from '@angular/core';
-import { PrestamoDetalle } from '../core/contrato';
-import { formatearFecha, formatearMonto } from '../core/formato';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  ViewEncapsulation,
+} from '@angular/core';
+import { Uuid } from '../core/contrato';
+import { FechaPipe, MontoPipe } from '../core/formato';
 import { mensajeDeError } from '../core/supabase';
-import { PrestamosService } from '../services/prestamos.service';
+import { PrestamoContrato, PrestamosService } from '../services/prestamos.service';
+import { Aviso } from './aviso';
 
-/** HU-09: muestra el contrato del préstamo y permite imprimirlo. */
+const METODO_TEXTO: Record<string, string> = {
+  CAPITAL_CONSTANTE: 'Capital constante (amortización igual cada mes)',
+  CUOTA_FIJA: 'Cuota fija',
+};
+
+/** Suma en céntimos para que los totales no arrastren errores de coma flotante. */
+function sumar(valores: number[]): number {
+  return valores.reduce((suma, v) => suma + Math.round(Number(v) * 100), 0) / 100;
+}
+
+/**
+ * HU-09 Contrato y cronograma imprimible. Uso en el detalle del préstamo (pantalla de C):
+ *   <app-contrato-prestamo [prestamoId]="prestamo.id" />
+ * Todo sale de datos guardados del préstamo (no de la fecha de hoy ni del estado de las cuotas),
+ * así que imprimirlo otra vez produce el mismo documento (CA2).
+ */
 @Component({
   selector: 'app-contrato-prestamo',
+  imports: [Aviso, MontoPipe, FechaPipe],
+  // Sin encapsulación: las reglas @media print deben alcanzar al body de la página
+  encapsulation: ViewEncapsulation.None,
+  styles: `
+    @media print {
+      @page {
+        size: A4;
+        margin: 15mm;
+      }
+      body * {
+        visibility: hidden;
+      }
+      .contrato-impresion,
+      .contrato-impresion * {
+        visibility: visible;
+      }
+      .contrato-impresion {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .contrato-impresion tr {
+        break-inside: avoid;
+      }
+      .no-imprimir {
+        display: none !important;
+      }
+    }
+  `,
   template: `
-    <section class="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 class="font-semibold text-slate-900">Contrato de préstamo</h3>
-          <p class="mt-1 text-sm text-slate-600">Genera una versión lista para imprimir.</p>
-        </div>
+    <app-aviso [mensaje]="error()" />
+
+    @if (cargando()) {
+      <p class="py-6 text-center text-sm text-slate-400">Cargando contrato…</p>
+    }
+
+    @if (prestamo(); as p) {
+      <div class="no-imprimir mb-3 flex justify-end">
         <button
           type="button"
           (click)="imprimir()"
-          [disabled]="cargando() || !prestamo()"
-          class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
         >
-          {{ cargando() ? 'Cargando...' : 'Imprimir contrato' }}
+          Imprimir contrato
         </button>
       </div>
 
-      @if (error()) {
-        <p class="mt-3 text-sm text-red-700">{{ error() }}</p>
-      }
+      <article
+        class="contrato-impresion rounded-md border border-slate-200 bg-white p-8 text-sm text-slate-900"
+      >
+        <header class="border-b border-slate-300 pb-4 text-center">
+          <h2 class="text-xl font-bold uppercase">Contrato de préstamo y cronograma de pagos</h2>
+          <p class="mt-1 text-xs text-slate-600">N.° {{ numero() }}</p>
+        </header>
 
-      @if (prestamo(); as contrato) {
-        <article class="contrato-imprimible mt-4 space-y-3 rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-800">
-          <h4 class="text-center text-lg font-semibold uppercase">Contrato de préstamo</h4>
-          <p>Entre el prestamista y <strong>{{ contrato.clientes.nombres }} {{ contrato.clientes.apellidos }}</strong>, identificado(a) con DNI {{ contrato.clientes.dni }}, se celebra el presente contrato.</p>
-          <dl class="grid gap-2 sm:grid-cols-2">
-            <div><dt class="text-slate-500">Monto</dt><dd class="font-medium">{{ monto(contrato.monto) }}</dd></div>
-            <div><dt class="text-slate-500">Plazo</dt><dd class="font-medium">{{ contrato.plazo_meses }} meses</dd></div>
-            <div><dt class="text-slate-500">Tasa efectiva anual</dt><dd class="font-medium">{{ porcentaje(contrato.tea) }}</dd></div>
-            <div><dt class="text-slate-500">Fecha de desembolso</dt><dd class="font-medium">{{ fecha(contrato.fecha_desembolso) }}</dd></div>
-          </dl>
-          <p>El cliente declara conocer las condiciones del préstamo y se compromete a cumplir el cronograma correspondiente.</p>
-        </article>
-      }
-    </section>
+        <section class="mt-4 grid grid-cols-2 gap-x-8 gap-y-1">
+          <p>
+            <span class="text-slate-600">Cliente:</span> <strong>{{ nombreCliente() }}</strong>
+          </p>
+          <p>
+            <span class="text-slate-600">DNI:</span> <strong>{{ p.clientes.dni }}</strong>
+          </p>
+          <p><span class="text-slate-600">Sede:</span> {{ p.sedes?.nombre }}</p>
+          <p><span class="text-slate-600">Atendido por:</span> {{ p.trabajadores?.nombre }}</p>
+          <p>
+            <span class="text-slate-600">Fecha del préstamo:</span>
+            {{ p.fecha_desembolso | fecha }}
+          </p>
+          <p>
+            <span class="text-slate-600">Monto prestado:</span>
+            <strong>{{ p.monto | monto }}</strong>
+          </p>
+          <p><span class="text-slate-600">Plazo:</span> {{ p.plazo_meses }} meses</p>
+          <p><span class="text-slate-600">Tasa:</span> {{ tasa() }}% TEA (tasa efectiva anual)</p>
+          <p class="col-span-2">
+            <span class="text-slate-600">Método de cuota:</span> {{ metodo() }}
+          </p>
+        </section>
+
+        <h3 class="mt-6 font-semibold">Cronograma de pagos</h3>
+        <table class="mt-2 w-full border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-slate-400 text-left">
+              <th class="py-1 pr-2">N.°</th>
+              <th class="py-1 pr-2">Vencimiento</th>
+              <th class="py-1 pr-2 text-right">Cuota</th>
+              <th class="py-1 pr-2 text-right">Capital</th>
+              <th class="py-1 pr-2 text-right">Interés</th>
+              <th class="py-1 text-right">Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of p.cuotas; track c.numero) {
+              <tr class="border-b border-slate-200">
+                <td class="py-1 pr-2">{{ c.numero }}</td>
+                <td class="py-1 pr-2">{{ c.fecha_vencimiento | fecha }}</td>
+                <td class="py-1 pr-2 text-right">{{ c.cuota | monto }}</td>
+                <td class="py-1 pr-2 text-right">{{ c.capital | monto }}</td>
+                <td class="py-1 pr-2 text-right">{{ c.interes | monto }}</td>
+                <td class="py-1 text-right">{{ c.saldo | monto }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-slate-400 font-semibold">
+              <td class="py-1 pr-2" colspan="2">Totales</td>
+              <td class="py-1 pr-2 text-right">{{ totales().cuota | monto }}</td>
+              <td class="py-1 pr-2 text-right">{{ totales().capital | monto }}</td>
+              <td class="py-1 pr-2 text-right">{{ totales().interes | monto }}</td>
+              <td class="py-1"></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <section class="mt-6 rounded border border-slate-300 p-3 text-xs leading-relaxed">
+          <p class="font-semibold">Condiciones de morosidad</p>
+          <p class="mt-1">
+            Cada cuota vence cada 30 días contados desde la fecha del préstamo. Si una cuota no se
+            paga en su fecha de vencimiento, desde el día siguiente el cliente pasa a la condición
+            de
+            <strong>Moroso</strong>, se cobra una mora del 1% por cada día de atraso y no podrá
+            recibir nuevos préstamos mientras mantenga deuda vencida. Si permanece más de un año sin
+            realizar ningún pago, su deuda se deriva a una empresa de cobranza extrajudicial.
+          </p>
+          <p class="mt-1">
+            El préstamo es irreversible: una vez firmado no se anula ni se modifica.
+          </p>
+        </section>
+
+        <section class="mt-16 grid grid-cols-2 gap-16 text-center text-xs">
+          <div class="border-t border-slate-500 pt-1">
+            {{ nombreCliente() }}<br />DNI {{ p.clientes.dni }}<br />Cliente
+          </div>
+          <div class="border-t border-slate-500 pt-1">
+            {{ p.trabajadores?.nombre }}<br />{{ p.sedes?.nombre }}<br />Por la empresa
+          </div>
+        </section>
+      </article>
+    }
   `,
 })
-export class ContratoPrestamo implements OnInit {
-  private readonly prestamosService = inject(PrestamosService);
+export class ContratoPrestamo {
+  private readonly prestamos = inject(PrestamosService);
 
-  @Input({ required: true }) prestamoId!: string;
+  readonly prestamoId = input.required<Uuid>();
 
-  protected readonly prestamo = signal<PrestamoDetalle | null>(null);
+  protected readonly prestamo = signal<PrestamoContrato | null>(null);
   protected readonly cargando = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  ngOnInit(): void {
-    void this.cargarContrato();
-  }
+  protected readonly numero = computed(() => (this.prestamo()?.id ?? '').slice(0, 8).toUpperCase());
+  protected readonly nombreCliente = computed(() => {
+    const c = this.prestamo()?.clientes;
+    return c ? `${c.nombres} ${c.apellidos}` : '';
+  });
+  protected readonly tasa = computed(() =>
+    (Math.round(Number(this.prestamo()?.tea ?? 0) * 10000) / 100).toString(),
+  );
+  protected readonly metodo = computed(() => {
+    const m = this.prestamo()?.metodo_cuota ?? '';
+    return METODO_TEXTO[m] ?? m;
+  });
+  protected readonly totales = computed(() => {
+    const cuotas = this.prestamo()?.cuotas ?? [];
+    return {
+      cuota: sumar(cuotas.map((c) => c.cuota)),
+      capital: sumar(cuotas.map((c) => c.capital)),
+      interes: sumar(cuotas.map((c) => c.interes)),
+    };
+  });
 
-  protected async cargarContrato(): Promise<void> {
-    this.cargando.set(true);
-    this.error.set(null);
-    try {
-      this.prestamo.set(await this.prestamosService.obtener(this.prestamoId));
-    } catch (error) {
-      this.error.set(mensajeDeError(error));
-    } finally {
-      this.cargando.set(false);
-    }
+  constructor() {
+    // Se recarga si cambia el préstamo que se muestra
+    effect(() => {
+      const id = this.prestamoId();
+      void this.cargar(id);
+    });
   }
 
   protected imprimir(): void {
     window.print();
   }
 
-  protected monto(valor: number): string {
-    return formatearMonto(valor);
-  }
-
-  protected fecha(valor: string): string {
-    return formatearFecha(valor);
-  }
-
-  protected porcentaje(valor: number): string {
-    return `${(Number(valor) * 100).toFixed(2)}%`;
+  private async cargar(id: Uuid): Promise<void> {
+    this.cargando.set(true);
+    this.error.set(null);
+    this.prestamo.set(null);
+    try {
+      this.prestamo.set(await this.prestamos.obtenerContrato(id));
+    } catch (e) {
+      this.error.set(mensajeDeError(e));
+    } finally {
+      this.cargando.set(false);
+    }
   }
 }
