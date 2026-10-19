@@ -31,31 +31,32 @@ const limpiarBusquedaCliente = (valor: string): string =>
   imports: [Aviso, RouterLink, ContratoPrestamo],
   template: `
     <div class="space-y-6">
-      <div>
-        <h1 class="text-2xl font-semibold text-slate-900">Préstamos</h1>
-        <p class="mt-1 text-sm text-slate-600">Consulta préstamos de todas las sedes y revisa su cronograma.</p>
-      </div>
+      <header>
+        <p class="text-xs font-semibold uppercase tracking-widest text-vino-700">Préstamos</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Listado de préstamos</h1>
+        <p class="mt-1 text-slate-500">Consulta préstamos de todas las sedes y revisa su cronograma.</p>
+      </header>
 
       <app-aviso [mensaje]="error()" />
 
-      <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-lg font-semibold text-slate-900">Filtros</h2>
           <button type="button" (click)="limpiarFiltros()" class="text-sm text-sky-700 underline hover:no-underline">Limpiar filtros</button>
         </div>
 
-        <div class="mt-4 grid gap-4 md:grid-cols-4 md:items-end">
+        <div class="mt-4 grid gap-4 md:grid-cols-4 md:items-start">
           <label class="block md:col-span-2">
             <span class="text-sm font-medium text-slate-700">Cliente (DNI o nombre)</span>
             <div class="mt-1 flex gap-2">
-              <input type="search" maxlength="60" autocomplete="off" [value]="busquedaCliente()" (input)="cambiarBusquedaCliente($event)" (keydown.enter)="buscarClientes()" placeholder="Ej. 70000001 o PÉREZ" class="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
-              <button type="button" (click)="buscarClientes()" [disabled]="buscandoCliente() || !busquedaCliente().trim()" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Buscar</button>
+              <input type="search" maxlength="60" autocomplete="off" [value]="busquedaCliente()" (input)="cambiarBusquedaCliente($event)" (keydown.enter)="buscarClientes()" placeholder="Ej. 70000001 o PÉREZ" class="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200" />
+              <button type="button" (click)="buscarClientes()" [disabled]="buscandoCliente() || !busquedaCliente().trim()" class="rounded-xl border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Buscar</button>
             </div>
             <span class="mt-1 block text-xs text-slate-500">DNI: 8 dígitos. Nombre: solo letras.</span>
           </label>
           <label class="block">
             <span class="text-sm font-medium text-slate-700">Estado</span>
-            <select [value]="estadoFiltro()" (change)="cambiarEstado($event)" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200">
+            <select [value]="estadoFiltro()" (change)="cambiarEstado($event)" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200">
               <option value="">Todos</option>
               <option value="VIGENTE">Vigente</option>
               <option value="CANCELADO">Cancelado</option>
@@ -63,7 +64,7 @@ const limpiarBusquedaCliente = (valor: string): string =>
           </label>
           <label class="block">
             <span class="text-sm font-medium text-slate-700">Sede</span>
-            <select [value]="sedeFiltro() ?? ''" (change)="cambiarSede($event)" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200">
+            <select [value]="sedeFiltro() ?? ''" (change)="cambiarSede($event)" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-200">
               <option value="">Todas las sedes</option>
               @for (sede of sedes(); track sede.id) {
                 <option [value]="sede.id">{{ sede.nombre }}</option>
@@ -73,7 +74,7 @@ const limpiarBusquedaCliente = (valor: string): string =>
         </div>
 
         @if (resultadosClientes().length > 0) {
-          <div class="mt-3 divide-y divide-slate-200 rounded-md border border-slate-200 md:w-1/2">
+          <div class="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 md:w-1/2">
             @for (cliente of resultadosClientes(); track cliente.id) {
               <button type="button" (click)="seleccionarCliente(cliente)" class="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50">
                 <span class="font-medium text-slate-900">{{ cliente.nombres }} {{ cliente.apellidos }}</span>
@@ -88,18 +89,18 @@ const limpiarBusquedaCliente = (valor: string): string =>
         }
 
         @if (clienteFiltro(); as cliente) {
-          <div class="mt-3 flex items-center justify-between rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm md:w-1/2">
+          <div class="mt-3 flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm md:w-1/2">
             <span><strong>{{ cliente.nombres }} {{ cliente.apellidos }}</strong> · DNI {{ cliente.dni }}</span>
             <button type="button" (click)="quitarCliente()" class="text-sky-800 underline hover:no-underline">Quitar</button>
           </div>
         }
 
-        <button type="button" (click)="cargarPrestamos()" [disabled]="cargando()" class="mt-4 rounded-md bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50">
+        <button type="button" (click)="cargarPrestamos()" [disabled]="cargando()" class="mt-4 rounded-xl bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-vino-800 disabled:cursor-not-allowed disabled:opacity-50">
           {{ cargando() ? 'Cargando...' : 'Aplicar filtros' }}
         </button>
       </section>
 
-      <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-5 py-4">
           <div>
             <h2 class="font-semibold text-slate-900">Listado de préstamos</h2>
@@ -154,7 +155,7 @@ const limpiarBusquedaCliente = (valor: string): string =>
       </section>
 
       @if (detalle(); as prestamo) {
-        <section class="space-y-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section class="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p class="text-sm text-slate-500">Detalle del préstamo</p>
@@ -164,13 +165,13 @@ const limpiarBusquedaCliente = (valor: string): string =>
             <a routerLink="/prestamos" class="text-sm text-sky-700 underline hover:no-underline">Cerrar detalle</a>
           </div>
           <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Fecha</dt><dd class="mt-1 font-medium text-slate-900">{{ fecha(prestamo.fecha_desembolso) }}</dd></div>
-            <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Monto</dt><dd class="mt-1 font-medium text-slate-900">{{ monto(prestamo.monto) }}</dd></div>
-            <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Plazo</dt><dd class="mt-1 font-medium text-slate-900">{{ prestamo.plazo_meses }} meses</dd></div>
-            <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Tasa</dt><dd class="mt-1 font-medium text-slate-900">{{ porcentaje(prestamo.tea) }}</dd></div>
-            <div class="rounded-md bg-slate-50 p-3"><dt class="text-xs text-slate-500">Estado</dt><dd class="mt-1 font-medium text-slate-900">{{ estado(prestamo.estado) }}</dd></div>
+            <div class="rounded-xl bg-slate-50 p-4"><dt class="text-xs text-slate-500">Fecha</dt><dd class="mt-1 font-medium text-slate-900">{{ fecha(prestamo.fecha_desembolso) }}</dd></div>
+            <div class="rounded-xl bg-slate-50 p-4"><dt class="text-xs text-slate-500">Monto</dt><dd class="mt-1 font-medium text-slate-900">{{ monto(prestamo.monto) }}</dd></div>
+            <div class="rounded-xl bg-slate-50 p-4"><dt class="text-xs text-slate-500">Plazo</dt><dd class="mt-1 font-medium text-slate-900">{{ prestamo.plazo_meses }} meses</dd></div>
+            <div class="rounded-xl bg-slate-50 p-4"><dt class="text-xs text-slate-500">Tasa</dt><dd class="mt-1 font-medium text-slate-900">{{ porcentaje(prestamo.tea) }}</dd></div>
+            <div class="rounded-xl bg-slate-50 p-4"><dt class="text-xs text-slate-500">Estado</dt><dd class="mt-1 font-medium text-slate-900">{{ estado(prestamo.estado) }}</dd></div>
           </dl>
-          <div class="overflow-x-auto rounded-md border border-slate-200">
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="min-w-full divide-y divide-slate-200 text-sm">
               <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-4 py-3">N°</th><th class="px-4 py-3">Vencimiento</th><th class="px-4 py-3 text-right">Cuota</th><th class="px-4 py-3 text-right">Capital</th><th class="px-4 py-3 text-right">Interés</th><th class="px-4 py-3 text-right">Saldo</th><th class="px-4 py-3">Estado</th></tr></thead>
               <tbody class="divide-y divide-slate-100">
