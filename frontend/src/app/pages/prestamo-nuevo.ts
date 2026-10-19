@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Cliente, EvaluacionPrestamo } from '../core/contrato';
 import { formatearFecha, formatearMonto } from '../core/formato';
 import { mensajeDeError } from '../core/supabase';
@@ -122,7 +123,7 @@ import { PrestamosService } from '../services/prestamos.service';
                   (change)="cambiarConformidad($event)"
                   class="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-500"
                 />
-                <span>El cliente está conforme y firmó el contrato</span>
+                <span>El cliente está conforme con las condiciones y firmará el contrato impreso</span>
               </label>
               <app-aviso [mensaje]="errorAprobacion()" />
               <app-aviso tipo="info" [mensaje]="prestamoCreado() ? 'Préstamo aprobado correctamente.' : null" />
@@ -147,6 +148,7 @@ import { PrestamosService } from '../services/prestamos.service';
 export class PrestamoNuevo {
   private readonly clientes = inject(ClientesService);
   private readonly prestamos = inject(PrestamosService);
+  private readonly router = inject(Router);
 
   protected readonly busqueda = signal('');
   protected readonly resultados = signal<Cliente[]>([]);
@@ -253,20 +255,23 @@ export class PrestamoNuevo {
 
     this.aprobando.set(true);
     this.errorAprobacion.set(null);
+    let id: string | null = null;
     try {
-      this.prestamoCreado.set(
-        await this.prestamos.aprobar({
-          p_cliente: cliente.id,
-          p_monto: monto,
-          p_plazo: plazo,
-          p_cliente_conforme: true,
-        }),
-      );
+      id = await this.prestamos.aprobar({
+        p_cliente: cliente.id,
+        p_monto: monto,
+        p_plazo: plazo,
+        p_cliente_conforme: true,
+      });
+      // Con el préstamo creado el botón queda bloqueado: no se puede aprobar dos veces
+      this.prestamoCreado.set(id);
     } catch (error) {
       this.errorAprobacion.set(mensajeDeError(error));
     } finally {
       this.aprobando.set(false);
     }
+    // Solo si la aprobación salió bien: al detalle, desde donde se imprime el contrato
+    if (id) await this.router.navigate(['/prestamos'], { queryParams: { id } });
   }
 
   private reiniciarAprobacion(): void {

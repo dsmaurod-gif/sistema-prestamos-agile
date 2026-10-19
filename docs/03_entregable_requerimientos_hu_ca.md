@@ -1,6 +1,6 @@
 # Sistema de Gestión de Préstamos — Requerimientos, Historias de Usuario y Criterios de Aceptación
 
-**Curso:** Agile Development · **Marco:** Scrum · **Versión:** 1.3.1 · **Fecha:** 17/10/2026
+**Curso:** Agile Development · **Marco:** Scrum · **Versión:** 1.3.2 · **Fecha:** 18/10/2026
 **Alcance de este documento:** requerimientos, historias de usuario y criterios de aceptación del MVP (Sprint 1). Los pagos (HU-18 a HU-22) quedan para el Sprint 2. Los cambios de la v1.3 están en el registro de cambios al final.
 
 ## 1. Requerimientos
@@ -61,7 +61,7 @@ Prioridad MoSCoW: **M** Must · **S** Should · **C** Could.
 | RF-09 | Ficha del cliente: datos, estado, límite, capital vigente, disponible, préstamos y cuotas. | RN-05–08 | M | MVP |
 | RF-10 | Evaluar una solicitud (cliente, monto, plazo) validando todas las reglas y mostrando **todos** los motivos de rechazo. | RN-05–09, RN-19, RN-21 | M | MVP |
 | RF-11 | Informe de evaluación: resultado, motivos, capital vigente, disponible, cuota, total a pagar. | RN-12 | M | MVP |
-| RF-12 | Aprobar y registrar el préstamo (revalidando reglas en el momento de confirmar), con confirmación de que el cliente está conforme y firmó. No existe anulación posterior. | RN-05, RN-06, RN-26 | M | MVP |
+| RF-12 | Aprobar y registrar el préstamo (revalidando reglas en el momento de confirmar), con confirmación de que el cliente está conforme con las condiciones (el contrato impreso se firma en papel tras la aprobación). No existe anulación posterior. | RN-05, RN-06, RN-26 | M | MVP |
 | RF-13 | Generar el cronograma al aprobar (n cuotas, vencimiento cada 30 días, capital, interés, cuota, saldo). | RN-10, RN-11 | M | MVP |
 | RF-14 | Imprimir/descargar contrato y cronograma (PDF). | RN-10 | M | MVP |
 | RF-15 | Listar préstamos con filtros (cliente, estado, sede) y ver detalle. | — | M | MVP |
@@ -177,8 +177,9 @@ Como trabajadora, quiero aprobar una solicitud evaluada, para entregar el prést
 - **CA3** Al confirmar, el sistema **revalida** las reglas; si entre la evaluación y la confirmación el cliente quedó sin disponible o moroso (p. ej., otra sede le prestó), entonces no aprueba y explica el motivo.
 - **CA4** La creación del préstamo y de su cronograma es atómica: o se guarda todo o nada.
 - **CA5** Un préstamo aprobado no se puede editar (monto, plazo, tasa).
-- **CA6** Antes de aprobar, el trabajador debe confirmar de forma explícita que el cliente está conforme y firmó; sin esa confirmación no se registra el préstamo.
+- **CA6** Antes de aprobar, el trabajador debe confirmar de forma explícita que el cliente está conforme con las condiciones del informe; sin esa confirmación no se registra el préstamo. El contrato se imprime después de aprobar y se firma en papel por el cliente y por la empresa.
 - **CA7** No existe función de anular ni de revertir un préstamo aprobado.
+- **CA8** Tras aprobar, el sistema lleva al detalle del préstamo, desde donde se imprime el contrato y el cronograma (HU-09).
 
 **HU-08 · Cronograma automático** (M · RF-13 · RN-10, RN-11)
 Como trabajadora, quiero que se genere el cronograma al aprobar, para entregar al cliente el detalle mes a mes.
@@ -301,6 +302,9 @@ Como trabajadora, quiero registrar el pago de una cuota, para actualizar la deud
 ---
 
 ## Registro de cambios
+
+**1.3.2 (18/10/2026)**
+- HU-07 CA6 y RF-12: la casilla confirma la conformidad con las condiciones del informe; el contrato se imprime después de aprobar y se firma en papel. HU-07 CA8 nuevo: tras aprobar se lleva al detalle del préstamo. RN-26 no se modificó.
 
 **1.3.1 (17/10/2026)**
 - RF-16 y HU-12 CA3: el estado se recalcula al consultar al cliente y con `fn_actualizar_estados` (botón del panel de demostración); no hay tarea programada (`pg_cron`) en el MVP.
