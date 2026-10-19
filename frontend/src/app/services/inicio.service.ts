@@ -18,13 +18,18 @@ export interface ResumenInicio {
 export class InicioService {
   private readonly db = inject(SUPABASE);
 
-  async resumen(): Promise<ResumenInicio> {
-    const clientes = resultado<{ estado: EstadoCliente }[]>(
-      await this.db.from('clientes').select('estado'),
-    );
-    const filas = resultado<
-      { estado: EstadoPrestamo; monto: number; sedes: { nombre: string } | null }[]
-    >(await this.db.from('prestamos').select('estado, monto, sedes(nombre)'));
+  /** Con sedeId solo cuenta lo de esa sede (clientes registrados allí y préstamos otorgados allí). */
+  async resumen(sedeId: number | null = null): Promise<ResumenInicio> {
+    let consultaClientes = this.db.from('clientes').select('estado');
+    if (sedeId !== null) consultaClientes = consultaClientes.eq('sede_registro_id', sedeId);
+    const clientes = resultado<{ estado: EstadoCliente }[]>(await consultaClientes);
+    let consultaPrestamos = this.db.from('prestamos').select('estado, monto, sedes(nombre)');
+    if (sedeId !== null) consultaPrestamos = consultaPrestamos.eq('sede_id', sedeId);
+    const filas = resultado(await consultaPrestamos) as unknown as {
+      estado: EstadoPrestamo;
+      monto: number;
+      sedes: { nombre: string } | null;
+    }[];
     // PostgREST devuelve la sede como objeto (a veces como lista de un elemento según la versión)
     const sedeDe = (fila: (typeof filas)[number]): string => {
       const sede = fila.sedes as unknown;
