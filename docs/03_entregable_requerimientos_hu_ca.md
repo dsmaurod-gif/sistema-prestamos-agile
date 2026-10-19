@@ -1,6 +1,6 @@
 # Sistema de Gestión de Préstamos — Requerimientos, Historias de Usuario y Criterios de Aceptación
 
-**Curso:** Agile Development · **Marco:** Scrum · **Versión:** 1.3.2 · **Fecha:** 18/10/2026
+**Curso:** Agile Development · **Marco:** Scrum · **Versión:** 1.4 · **Fecha:** 19/10/2026
 **Alcance de este documento:** requerimientos, historias de usuario y criterios de aceptación del MVP (Sprint 1). Los pagos (HU-18 a HU-22) quedan para el Sprint 2. Los cambios de la v1.3 están en el registro de cambios al final.
 
 ## 1. Requerimientos
@@ -39,6 +39,8 @@
 | RN-28 | El informe de evaluación entrega solo el resultado; no se consulta Infocorp ni se piden datos adicionales. | MVP |
 | RN-29 | Un moroso que paga vuelve a Al día; un Extrajudicial no vuelve. | S2 |
 | RN-30 | Identificación con RUC (v1.3): antes del registro se elige "DNI / RUC". El cliente se sigue identificando por DNI (único; sostiene el tope global). Con RUC se consulta SUNAT y solo se acepta un RUC ACTIVO y HABIDO; se sigue exigiendo el DNI del titular, consultado en RENIEC. *Diseño por defecto, por confirmar con el profesor.* | MVP |
+| RN-31 | Capital diario (v1.4): al iniciar la jornada, cada trabajador solicita capital para los préstamos del día. El total solicitado por un trabajador en un día (solicitudes pendientes y aprobadas) no puede pasar de **S/ 50,000**; puede pedir menos, o más de una vez, mientras no exceda el límite. Lo rechazado vuelve a quedar disponible. | MVP |
+| RN-32 | Las solicitudes de capital las aprueba o rechaza el administrador; una solicitud resuelta no se modifica. El saldo aprobado y lo prestado en el día se informan al trabajador, pero la aprobación de préstamos no se bloquea por ese saldo (*por confirmar con el profesor*). | MVP |
 
 \* En el MVP el sistema **calcula** la liberación de saldo a partir de las cuotas pagadas, pero no incluye pantalla para registrar pagos (módulo de pagos fuera de esta entrega). Esos casos se demuestran con datos precargados.
 
@@ -75,6 +77,9 @@ Prioridad MoSCoW: **M** Must · **S** Should · **C** Could.
 | RF-28 | Marcar el préstamo como Cancelado cuando todas sus cuotas estén pagadas y liberar su cupo. | RN-07 | M | MVP |
 | RF-29 | Validar que el DNI esté vigente al registrar y al evaluar. | RN-25 | M | MVP |
 | RF-30 | Selector "DNI / RUC" al registrar. Con RUC: consultar SUNAT, mostrar razón social, estado y condición, rechazar si estado ≠ ACTIVO o condición ≠ HABIDO, y exigir además el DNI del titular. | RN-30 | M | MVP |
+| RF-31 | Pantalla "Solicitud de capital" (trabajador): solicitar capital del día con monto y nota opcional, ver lo solicitado, aprobado y disponible, y el historial propio con su estado. | RN-31 | M | MVP |
+| RF-32 | Pantalla "Gestionar solicitudes" (administrador): ver las solicitudes de todos los trabajadores con filtros (estado, sede, jornada) y aprobarlas o rechazarlas. | RN-32 | M | MVP |
+| RF-33 | Modo demostración: vaciar clientes, préstamos, cuotas y solicitudes (conservando trabajadores, sedes, parámetros y bitácora) con respaldo previo, y restaurar el último respaldo. | — | M | MVP (técnico) |
 | RF-22 | Registrar pago de una cuota (por la trabajadora; sin pasarela). | RN-13 | M | S2 |
 | RF-23 | Pago con varios métodos/cuentas Yape en una misma operación; la suma debe igualar el monto. | RN-14 | M | S2 |
 | RF-24 | Pago anticipado en orden de cuotas. | RN-15, RN-16 | M | S2 |
@@ -273,6 +278,32 @@ Como equipo, queremos datos de ejemplo y una fecha simulada, para demostrar moro
 - **CA2** Existe una "fecha de referencia" configurable solo en modo demostración, visible con un aviso en pantalla, que mueve el cálculo de vencimientos y estados.
 - **CA3** En producción/real la fecha de referencia es siempre la del día.
 
+### Épica 7 — Capital diario (v1.4)
+
+**HU-24 · Solicitar capital del día** (M · RF-31 · RN-31)
+Como trabajador, quiero solicitar al inicio de la jornada el capital que necesito, para contar con saldo para los préstamos del día.
+- **CA1** Solo el rol Trabajador ve la opción "Solicitud de capital" y puede solicitar; el administrador no.
+- **CA2** El monto es mayor a 0 y tiene como máximo 2 decimales; el campo no admite letras, signos ni notación científica.
+- **CA3** Puede hacer varias solicitudes en el día mientras el total solicitado (pendientes y aprobadas) no pase de S/ 50,000; si lo pasa, la base de datos la rechaza indicando cuánto ya solicitó y cuánto puede pedir.
+- **CA4** Una solicitud rechazada libera su monto para volver a pedir.
+- **CA5** La pantalla muestra lo solicitado, aprobado, pendiente y disponible para pedir del día, y el historial propio con estado, hora y respuesta del administrador.
+- **CA6** Un trabajador solo ve sus propias solicitudes.
+- **CA7** La solicitud queda registrada en la bitácora con trabajador, sede, monto y fecha.
+
+**HU-25 · Gestionar solicitudes de capital** (M · RF-32 · RN-32)
+Como administrador, quiero ver las solicitudes de capital de todos los trabajadores y resolverlas, para controlar el capital que se entrega cada día.
+- **CA1** Solo el administrador ve "Gestionar solicitudes".
+- **CA2** Lista las solicitudes de todas las sedes con filtros por estado (por defecto Pendientes), sede y jornada, e indicadores de pendientes, aprobadas y rechazadas.
+- **CA3** Puede aprobar o rechazar una solicitud pendiente, con un comentario opcional; no puede resolverse dos veces.
+- **CA4** La resolución queda en la bitácora; la lista se actualiza sola.
+- **CA5** La identidad de quien solicita y de quien resuelve se toma de la sesión, no de datos enviados por el navegador.
+
+**HU-T2 · Vaciar y restaurar datos** (M · RF-33) — *historia técnica*
+Como equipo, queremos vaciar los datos de prueba y poder recuperarlos, para presentar con el sistema sin datos y volver a la demostración cuando haga falta.
+- **CA1** Un botón del modo demostración borra clientes, préstamos, cuotas y solicitudes; conserva trabajadores, sedes, parámetros y bitácora.
+- **CA2** Antes de borrar se guarda un respaldo (se conservan los 5 últimos); "Restaurar" devuelve el último respaldo y guarda el estado actual, de modo que se puede deshacer.
+- **CA3** Ambas acciones piden confirmación y solo las ejecuta un administrador activo.
+
 ### Épica 6 — Pagos (FUERA de esta entrega; no se construye de forma parcial)
 
 **HU-18 · Registrar pago de cuota** (M-S2 · RF-22 · RN-13)
@@ -302,6 +333,9 @@ Como trabajadora, quiero registrar el pago de una cuota, para actualizar la deud
 ---
 
 ## Registro de cambios
+
+**1.4 (19/10/2026)**
+- Nuevo procedimiento de capital diario: RN-31, RN-32, RF-31 a RF-33, HU-24 (Solicitud de capital), HU-25 (Gestionar solicitudes) y HU-T2 (vaciar y restaurar datos). Límite de S/ 50,000 por trabajador y día; la aprobación de préstamos no se bloquea por el saldo (por confirmar con el profesor).
 
 **1.3.2 (18/10/2026)**
 - HU-07 CA6 y RF-12: la casilla confirma la conformidad con las condiciones del informe; el contrato se imprime después de aprobar y se firma en papel. HU-07 CA8 nuevo: tras aprobar se lleva al detalle del préstamo. RN-26 no se modificó.
