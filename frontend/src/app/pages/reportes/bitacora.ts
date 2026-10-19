@@ -47,7 +47,7 @@ function textoEstado(valor: unknown): string {
         <input
           type="date"
           [(ngModel)]="desde"
-          class="mt-1 block rounded border border-slate-300 px-3 py-2"
+          class="mt-1 block rounded-xl border border-slate-300 bg-white px-3.5 py-2.5"
         />
       </label>
       <label class="text-sm font-medium text-slate-700">
@@ -55,12 +55,12 @@ function textoEstado(valor: unknown): string {
         <input
           type="date"
           [(ngModel)]="hasta"
-          class="mt-1 block rounded border border-slate-300 px-3 py-2"
+          class="mt-1 block rounded-xl border border-slate-300 bg-white px-3.5 py-2.5"
         />
       </label>
       <label class="text-sm font-medium text-slate-700">
         Acción
-        <select [(ngModel)]="accion" class="mt-1 block rounded border border-slate-300 px-3 py-2">
+        <select [(ngModel)]="accion" class="mt-1 block rounded-xl border border-slate-300 bg-white px-3.5 py-2.5">
           <option value="">Todas</option>
           @for (a of acciones; track a.valor) {
             <option [value]="a.valor">{{ a.texto }}</option>
@@ -69,7 +69,7 @@ function textoEstado(valor: unknown): string {
       </label>
       <label class="text-sm font-medium text-slate-700">
         Sede
-        <select [(ngModel)]="sedeId" class="mt-1 block rounded border border-slate-300 px-3 py-2">
+        <select [(ngModel)]="sedeId" class="mt-1 block rounded-xl border border-slate-300 bg-white px-3.5 py-2.5">
           <option [ngValue]="null">Todas</option>
           @for (s of sedes(); track s.id) {
             <option [ngValue]="s.id">{{ s.nombre }}</option>
@@ -80,7 +80,7 @@ function textoEstado(valor: unknown): string {
         type="button"
         (click)="cargar()"
         [disabled]="cargando()"
-        class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        class="rounded bg-vino-700 px-4 py-2 text-sm font-medium text-white hover:bg-vino-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {{ cargando() ? 'Buscando…' : 'Buscar' }}
       </button>
@@ -95,7 +95,7 @@ function textoEstado(valor: unknown): string {
       {{ limite }} registros más recientes que cumplen los filtros.
     </p>
 
-    <div class="mt-2 overflow-x-auto rounded-md border border-slate-200 bg-white">
+    <div class="mt-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <table class="min-w-full text-sm">
         <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
           <tr>
