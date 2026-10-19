@@ -12,6 +12,7 @@ import { FechaPipe, MontoPipe } from '../core/formato';
 import { mensajeDeError } from '../core/supabase';
 import { PrestamoContrato, PrestamosService } from '../services/prestamos.service';
 import { Aviso } from './aviso';
+import { Icono } from './icono';
 
 const METODO_TEXTO: Record<string, string> = {
   CAPITAL_CONSTANTE: 'Capital constante (amortización igual cada mes)',
@@ -31,7 +32,7 @@ function sumar(valores: number[]): number {
  */
 @Component({
   selector: 'app-contrato-prestamo',
-  imports: [Aviso, MontoPipe, FechaPipe],
+  imports: [Aviso, Icono, MontoPipe, FechaPipe],
   // Sin encapsulación: las reglas @media print deben alcanzar al body de la página
   encapsulation: ViewEncapsulation.None,
   styles: `
@@ -62,6 +63,19 @@ function sumar(valores: number[]): number {
       .no-imprimir {
         display: none !important;
       }
+      /* La ventana del detalle no debe recortar ni mover el contrato al imprimir */
+      .visor-overlay,
+      .visor-contrato,
+      .visor-cuerpo {
+        position: static !important;
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        padding: 0 !important;
+        background: none !important;
+        box-shadow: none !important;
+      }
     }
   `,
   template: `
@@ -76,9 +90,10 @@ function sumar(valores: number[]): number {
         <button
           type="button"
           (click)="imprimir()"
-          class="rounded-xl bg-vino-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-vino-800"
+          class="flex items-center gap-2 rounded-xl bg-vino-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-vino-700/25 transition hover:bg-vino-800"
         >
-          Imprimir contrato
+          <app-icono nombre="imprimir" class="h-5 w-5" />
+          Imprimir ahora
         </button>
       </div>
 

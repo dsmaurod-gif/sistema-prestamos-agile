@@ -44,8 +44,13 @@ interface Tarjeta {
               Bienvenido al Sistema de Gestión de Préstamos
             </p>
             <p class="mt-2 text-sm text-vino-200">
-              Gestiona clientes, evalúa y otorga préstamos con reglas de crédito uniformes en todas
-              las sedes.
+              {{
+                esAdmin()
+                  ? 'Gestiona clientes, evalúa y otorga préstamos con reglas de crédito uniformes en todas las sedes.'
+                  : 'Resumen de ' +
+                    nombreSede() +
+                    '. Los clientes y préstamos de las demás sedes están en Clientes y Préstamos.'
+              }}
             </p>
           </div>
           <div class="flex flex-wrap gap-3">
@@ -93,16 +98,16 @@ interface Tarjeta {
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-3">
           <div class="flex items-center gap-3">
             <app-icono nombre="reportes" class="h-5 w-5 text-vino-700" />
-            <h2 class="font-semibold text-slate-900">Préstamos otorgados por sede</h2>
+            <h2 class="font-semibold text-slate-900">{{ tituloBarras() }}</h2>
           </div>
           @if (resumen(); as r) {
-            @if (r.prestamos.porSede.length === 0) {
+            @if (barras().length === 0) {
               <p class="py-10 text-center text-sm text-slate-400">
                 Todavía no hay préstamos registrados.
               </p>
             } @else {
               <ul class="mt-6 space-y-4">
-                @for (s of r.prestamos.porSede; track s.sede) {
+                @for (s of barras(); track s.sede) {
                   <li>
                     <div class="flex items-center justify-between text-sm">
                       <span class="font-medium text-slate-700">{{ s.sede }}</span>
@@ -165,7 +170,9 @@ interface Tarjeta {
         <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
           <div class="flex items-center gap-3">
             <app-icono nombre="documento" class="h-5 w-5 text-vino-700" />
-            <h2 class="font-semibold text-slate-900">Últimos préstamos registrados</h2>
+            <h2 class="font-semibold text-slate-900">
+              {{ esAdmin() ? 'Últimos préstamos registrados' : 'Últimos préstamos de mi sede' }}
+            </h2>
           </div>
           <a
             routerLink="/prestamos"
@@ -256,9 +263,32 @@ export class Inicio implements OnInit {
     return nombre.trim().split(/\s+/)[0] || 'bienvenido';
   });
 
-  protected readonly maxSede = computed(() =>
-    Math.max(1, ...(this.resumen()?.prestamos.porSede.map((s) => s.total) ?? [1])),
+  protected readonly esAdmin = this.auth.esAdmin;
+  /** Un trabajador ve la situación de su sede; el administrador, la de todas (y la comparación entre sedes). */
+  protected readonly sedeId = computed(() =>
+    this.auth.esAdmin() ? null : (this.auth.trabajador()?.sede_id ?? null),
   );
+  protected readonly nombreSede = computed(
+    () => this.auth.trabajador()?.sedes?.nombre ?? 'mi sede',
+  );
+  protected readonly alcance = computed(() =>
+    this.esAdmin() ? 'En todas las sedes' : this.nombreSede(),
+  );
+  protected readonly tituloBarras = computed(() =>
+    this.esAdmin() ? 'Préstamos otorgados por sede' : 'Cartera de ' + this.nombreSede(),
+  );
+  /** Administrador: préstamos por sede. Trabajador: vigentes y cancelados de su sede. */
+  protected readonly barras = computed(() => {
+    const r = this.resumen();
+    if (!r) return [];
+    if (this.esAdmin()) return r.prestamos.porSede;
+    return [
+      { sede: 'Vigentes', total: r.prestamos.vigentes },
+      { sede: 'Cancelados', total: r.prestamos.total - r.prestamos.vigentes },
+    ];
+  });
+
+  protected readonly maxSede = computed(() => Math.max(1, ...this.barras().map((s) => s.total)));
 
   protected readonly tarjetas = computed<Tarjeta[]>(() => {
     const r = this.resumen();
@@ -266,7 +296,7 @@ export class Inicio implements OnInit {
       {
         titulo: 'Clientes registrados',
         valor: String(r?.clientes.total ?? 0),
-        detalle: 'En todas las sedes',
+        detalle: this.alcance(),
         icono: 'clientes',
         tono: 'bg-vino-100 text-vino-700',
       },
@@ -321,8 +351,8 @@ export class Inicio implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       const [resumen, ultimos] = await Promise.all([
-        this.inicio.resumen(),
-        this.prestamos.listar({}, 5),
+        this.inicio.resumen(this.sedeId()),
+        this.prestamos.listar({ sedeId: this.sedeId() ?? undefined }, 5),
       ]);
       this.resumen.set(resumen);
       this.ultimos.set(ultimos);
