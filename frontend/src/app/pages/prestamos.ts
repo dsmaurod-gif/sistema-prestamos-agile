@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Aviso } from '../components/aviso';
+import { ContratoPrestamo } from '../components/contrato-prestamo';
 import {
   Cliente,
   Cuota,
@@ -19,7 +20,7 @@ type FiltroEstado = '' | EstadoPrestamo;
 /** HU-10: listado filtrable de préstamos y detalle con cronograma (HU-08). */
 @Component({
   selector: 'app-pagina-prestamos',
-  imports: [Aviso, RouterLink],
+  imports: [Aviso, RouterLink, ContratoPrestamo],
   template: `
     <div class="space-y-6">
       <div>
@@ -159,6 +160,7 @@ type FiltroEstado = '' | EstadoPrestamo;
               </tbody>
             </table>
           </div>
+          <app-contrato-prestamo [prestamoId]="prestamo.id" />
         </section>
       }
     </div>
@@ -280,7 +282,7 @@ export class Prestamos implements OnInit {
   }
 
   protected porcentaje(valor: number): string {
-    return `${Number(valor).toFixed(2)}%`;
+    return `${(Number(valor) * 100).toFixed(2)}%`;
   }
 
   protected estado(estado: EstadoPrestamo): string {
