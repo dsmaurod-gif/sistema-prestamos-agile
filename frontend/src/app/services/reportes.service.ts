@@ -68,4 +68,16 @@ export class ReportesService {
     );
     return filas as unknown as RegistroBitacoraDetallado[]; // PostgREST devuelve cada relación como objeto
   }
+
+  /** Año del préstamo más antiguo (para las opciones del filtro por año); null si no hay préstamos. */
+  async primerAnioPrestamo(): Promise<number | null> {
+    const filas = resultado<{ fecha_desembolso: string }[]>(
+      await this.db
+        .from('prestamos')
+        .select('fecha_desembolso')
+        .order('fecha_desembolso', { ascending: true })
+        .limit(1),
+    );
+    return filas.length ? Number(filas[0].fecha_desembolso.slice(0, 4)) : null;
+  }
 }
