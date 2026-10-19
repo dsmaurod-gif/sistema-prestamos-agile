@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Aviso } from '../components/aviso';
-import { ParametroEditable } from '../core/contrato';
+import { InfoRespaldo, ParametroEditable } from '../core/contrato';
 import { formatearFecha } from '../core/formato';
 import { mensajeDeError } from '../core/supabase';
 import { DemoService } from '../services/demo.service';
@@ -152,8 +152,9 @@ const PARAMETROS: ConfigParametro[] = [
     <section class="mt-6 rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
       <h2 class="font-semibold text-slate-900">Reiniciar datos de demostración</h2>
       <p class="mt-1 text-sm text-slate-600">
-        Borra todos los clientes, préstamos y cuotas, vuelve a cargar los 7 clientes demo y deja el
-        sistema con la fecha real. No cambia los parámetros de arriba ni la bitácora.
+        Borra todos los clientes, préstamos, cuotas y solicitudes de capital, vuelve a cargar los 7
+        clientes demo y deja el sistema con la fecha real. Guarda un respaldo antes. No cambia los
+        parámetros de arriba, los trabajadores ni la bitácora.
       </p>
       @if (!confirmandoReinicio()) {
         <button
@@ -190,6 +191,90 @@ const PARAMETROS: ConfigParametro[] = [
         </div>
       }
     </section>
+
+    <section class="mt-6 rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+      <h2 class="font-semibold text-slate-900">Vaciar y restaurar datos</h2>
+      <p class="mt-1 text-sm text-slate-600">
+        <strong>Vaciar</strong> borra todos los clientes, préstamos, cuotas y solicitudes de capital
+        para empezar sin datos. Se conservan los trabajadores, las sedes, los parámetros y la
+        bitácora. Antes de borrar se guarda un respaldo, así que <strong>Restaurar</strong> devuelve
+        todo tal como estaba.
+      </p>
+
+      @if (respaldo(); as r) {
+        <p class="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700" id="info-respaldo">
+          @if (r.existe) {
+            Último respaldo: <strong>{{ formatearFechaHora(r.creado_en) }}</strong> con
+            {{ r.clientes }} clientes, {{ r.prestamos }} préstamos y
+            {{ r.solicitudes }} solicitudes.
+          } @else {
+            Todavía no hay respaldos: se crea uno la primera vez que vacíes o reinicies los datos.
+          }
+        </p>
+      }
+
+      @if (accionPendiente() === null) {
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button
+            id="btn-vaciar-datos"
+            type="button"
+            (click)="accionPendiente.set('vaciar')"
+            [disabled]="ocupado() || !cargado()"
+            class="rounded-xl border border-red-300 px-5 py-2.5 text-sm font-semibold text-red-800 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Vaciar datos
+          </button>
+          <button
+            id="btn-restaurar-datos"
+            type="button"
+            (click)="accionPendiente.set('restaurar')"
+            [disabled]="ocupado() || !cargado() || !respaldo()?.existe"
+            class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-vino-300 hover:bg-vino-50 hover:text-vino-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Restaurar último respaldo
+          </button>
+        </div>
+      } @else {
+        <div
+          class="animar-aparece mt-4 rounded-xl border border-red-300 bg-red-50 p-4"
+          role="alertdialog"
+        >
+          <p class="text-sm font-medium text-red-900">
+            @if (accionPendiente() === 'vaciar') {
+              Esto borra todos los clientes, préstamos, cuotas y solicitudes de todos los usuarios.
+              Se guarda un respaldo para poder restaurarlos.
+            } @else {
+              Esto reemplaza los datos actuales por los del último respaldo. Los datos actuales
+              también se respaldan.
+            }
+          </p>
+          <div class="mt-3 flex flex-wrap gap-3">
+            <button
+              type="button"
+              (click)="confirmarAccion()"
+              [disabled]="ocupado()"
+              class="rounded-xl bg-red-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{
+                ocupado()
+                  ? 'Procesando…'
+                  : accionPendiente() === 'vaciar'
+                    ? 'Sí, vaciar'
+                    : 'Sí, restaurar'
+              }}
+            </button>
+            <button
+              type="button"
+              (click)="accionPendiente.set(null)"
+              [disabled]="ocupado()"
+              class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      }
+    </section>
   `,
 })
 export class Demo implements OnInit {
@@ -205,6 +290,17 @@ export class Demo implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly exito = signal<string | null>(null);
   protected readonly confirmandoReinicio = signal(false);
+  protected readonly accionPendiente = signal<'vaciar' | 'restaurar' | null>(null);
+  protected readonly respaldo = signal<InfoRespaldo | null>(null);
+  protected readonly formatearFechaHora = (iso: string | undefined): string =>
+    iso
+      ? new Intl.DateTimeFormat('es-PE', {
+          timeZone: 'America/Lima',
+          dateStyle: 'short',
+          timeStyle: 'short',
+          hour12: false,
+        }).format(new Date(iso))
+      : '';
 
   async ngOnInit(): Promise<void> {
     await this.ejecutar(async () => {
@@ -213,6 +309,7 @@ export class Demo implements OnInit {
       this.valores.set(Object.fromEntries(lista.map((p) => [p.clave, p.valor])));
       this.fecha.set(this.fechaActual());
       this.cargado.set(true);
+      await this.cargarRespaldo();
     });
   }
 
@@ -272,6 +369,36 @@ export class Demo implements OnInit {
     this.confirmandoReinicio.set(true);
   }
 
+  /** Lee qué respaldo hay disponible; si falla (por ejemplo, el script 11 aún no se ejecutó) no bloquea el panel. */
+  private async cargarRespaldo(): Promise<void> {
+    try {
+      this.respaldo.set(await this.demo.infoRespaldo());
+    } catch {
+      this.respaldo.set(null);
+    }
+  }
+
+  protected async confirmarAccion(): Promise<void> {
+    const accion = this.accionPendiente();
+    if (!accion) return;
+    await this.ejecutar(async () => {
+      if (accion === 'vaciar') {
+        const r = await this.demo.vaciarDatos();
+        this.fecha.set('');
+        this.exito.set(
+          `Datos vaciados: se borraron ${r.clientes} clientes, ${r.prestamos} préstamos, ${r.cuotas} cuotas y ${r.solicitudes} solicitudes. Quedó guardado un respaldo para restaurarlos.`,
+        );
+      } else {
+        const r = await this.demo.restaurarDatos();
+        this.exito.set(
+          `Datos restaurados: ${r.clientes} clientes, ${r.prestamos} préstamos, ${r.cuotas} cuotas y ${r.solicitudes} solicitudes.`,
+        );
+      }
+      this.accionPendiente.set(null);
+      await this.cargarRespaldo();
+    });
+  }
+
   protected cancelarReinicio(): void {
     this.confirmandoReinicio.set(false);
   }
@@ -281,6 +408,7 @@ export class Demo implements OnInit {
       const resumen = await this.demo.reiniciarDatos();
       this.fecha.set('');
       this.confirmandoReinicio.set(false);
+      await this.cargarRespaldo();
       this.exito.set(
         `Datos de demostración reiniciados: ${resumen.clientes} clientes, ${resumen.prestamos} préstamos y ${resumen.cuotas} cuotas. El sistema usa la fecha real.`,
       );
