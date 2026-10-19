@@ -127,6 +127,83 @@ export interface FuncionesRpc {
   fn_capital_vigente: { params: ClienteParams; respuesta: number };
   /** Solo ADMIN: reinicia los datos de demostración (sql/09_demo_reiniciar.sql). */
   sp_demo_reiniciar: { params: Record<string, never>; respuesta: ResumenReinicioDemo };
+  /** Trabajador: pide capital del día (sql/11_solicitudes_capital.sql). */
+  fn_solicitar_capital: { params: SolicitarCapitalParams; respuesta: Uuid };
+  /** Administrador: aprueba o rechaza una solicitud pendiente. */
+  fn_resolver_solicitud: { params: ResolverSolicitudParams; respuesta: null };
+  /** Trabajador: lo solicitado, aprobado y disponible del día. */
+  fn_resumen_capital_dia: { params: Record<string, never>; respuesta: ResumenCapitalDia[] };
+  /** Administrador: borra clientes, préstamos, cuotas y solicitudes (con respaldo). */
+  sp_demo_vaciar: { params: Record<string, never>; respuesta: ResumenDatos };
+  /** Administrador: devuelve el último respaldo. */
+  sp_demo_restaurar: { params: Record<string, never>; respuesta: ResumenDatos };
+  fn_respaldo_demo_info: { params: Record<string, never>; respuesta: InfoRespaldo };
+}
+
+// ---------- Solicitudes de capital diario ----------
+
+export type EstadoSolicitud = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+
+export interface SolicitarCapitalParams {
+  p_monto: number;
+  p_comentario?: string | null;
+}
+
+export interface ResolverSolicitudParams {
+  p_solicitud: Uuid;
+  p_aprobar: boolean;
+  p_comentario?: string | null;
+}
+
+export interface ResumenCapitalDia {
+  limite: number;
+  solicitado: number;
+  pendiente: number;
+  aprobado: number;
+  rechazado: number;
+  disponible_solicitar: number;
+  desembolsado: number;
+  saldo_disponible: number;
+}
+
+export interface SolicitudCapital {
+  id: Uuid;
+  trabajador_id: Uuid;
+  sede_id: number;
+  fecha: FechaISO;
+  monto: number;
+  estado: EstadoSolicitud;
+  comentario: string | null;
+  creado_en: string;
+  resuelto_por: Uuid | null;
+  resuelto_en: string | null;
+  comentario_admin: string | null;
+}
+
+/** Solicitud con el nombre de quien la pidió, de quien la resolvió y la sede. */
+export interface SolicitudCapitalDetalle extends SolicitudCapital {
+  solicitante: { nombre: string } | null;
+  resolutor: { nombre: string } | null;
+  sedes: { nombre: string } | null;
+}
+
+/** Cantidades de datos del negocio tras vaciar o restaurar. */
+export interface ResumenDatos {
+  clientes: number;
+  prestamos: number;
+  cuotas: number;
+  solicitudes: number;
+  respaldo_id: number | null;
+}
+
+export interface InfoRespaldo {
+  existe: boolean;
+  id?: number;
+  creado_en?: string;
+  origen?: 'VACIAR' | 'REINICIAR' | 'RESTAURAR';
+  clientes?: number;
+  prestamos?: number;
+  solicitudes?: number;
 }
 
 // ---------- Edge Function consultar-dni ----------
