@@ -71,7 +71,7 @@ Si `aprobable` es `false`, mostrar **todos** los textos de `motivos`.
 
 ### `fn_aprobar_prestamo` → `uuid` (id del préstamo)
 Parámetros: `p_cliente`, `p_monto`, `p_plazo`, `p_trabajador`, `p_cliente_conforme boolean`.
-- `p_cliente_conforme` debe ser `true` (casilla: "El cliente está conforme y firmó el contrato"). **No existe anulación posterior.**
+- `p_cliente_conforme` debe ser `true` (casilla: "El cliente está conforme con las condiciones y firmará el contrato impreso"). **No existe anulación posterior.**
 - Revalida todas las reglas; si algo cambió desde la evaluación, devuelve error.
 - Crea el préstamo y su cronograma (cuotas) de forma atómica.
 
