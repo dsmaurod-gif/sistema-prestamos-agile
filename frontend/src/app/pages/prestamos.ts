@@ -249,6 +249,7 @@ export class Prestamos implements OnInit {
   protected seleccionarCliente(cliente: Cliente): void {
     this.clienteFiltro.set(cliente);
     this.resultadosClientes.set([]);
+    void this.cargarPrestamos();
   }
 
   protected quitarCliente(): void {
