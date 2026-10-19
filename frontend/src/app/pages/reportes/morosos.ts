@@ -52,7 +52,7 @@ function numeroCsv(valor: number): string {
     <div class="flex flex-wrap items-end gap-3">
       <label class="text-sm font-medium text-slate-700">
         Estado
-        <select [(ngModel)]="estado" class="mt-1 block rounded border border-slate-300 px-3 py-2">
+        <select [(ngModel)]="estado" class="mt-1 block rounded-xl border border-slate-300 bg-white px-3.5 py-2.5">
           <option value="">Morosos y extrajudiciales</option>
           <option value="MOROSO">Solo morosos</option>
           <option value="EXTRAJUDICIAL">Solo extrajudiciales</option>
@@ -64,7 +64,7 @@ function numeroCsv(valor: number): string {
           [ngModel]="sedeId()"
           (ngModelChange)="cambiarSede($event)"
           [disabled]="cargando()"
-          class="mt-1 block rounded border border-slate-300 px-3 py-2 disabled:bg-slate-100"
+          class="mt-1 block rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 disabled:bg-slate-100"
         >
           <option [ngValue]="null">Todas las sedes</option>
           @for (s of sedes(); track s.id) {
@@ -76,7 +76,7 @@ function numeroCsv(valor: number): string {
         type="button"
         (click)="exportarCsv()"
         [disabled]="cargando() || filasVisibles().length === 0"
-        class="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        class="rounded bg-vino-700 px-4 py-2 text-sm font-medium text-white hover:bg-vino-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         Exportar CSV
       </button>
@@ -91,7 +91,7 @@ function numeroCsv(valor: number): string {
       <strong class="text-slate-900">{{ totalRegularizar() | monto }}</strong>
     </p>
 
-    <div class="mt-2 overflow-x-auto rounded-md border border-slate-200 bg-white">
+    <div class="mt-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <table class="min-w-full text-sm">
         <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
           <tr>
