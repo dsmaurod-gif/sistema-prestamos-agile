@@ -13,7 +13,12 @@ export const routes: Routes = [
     component: Layout,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'clientes' },
+      { path: '', pathMatch: 'full', redirectTo: 'inicio' },
+      {
+        path: 'inicio',
+        title: 'Inicio',
+        loadComponent: () => import('./pages/inicio').then((m) => m.Inicio),
+      },
       {
         path: 'clientes',
         title: 'Clientes',
@@ -48,5 +53,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: 'clientes' },
+  { path: '**', redirectTo: 'inicio' },
 ];

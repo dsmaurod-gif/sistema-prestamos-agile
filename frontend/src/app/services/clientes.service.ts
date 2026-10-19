@@ -37,6 +37,13 @@ export class ClientesService {
     );
   }
 
+  /** Clientes más recientes (todas las sedes) para la lista inicial de la pantalla de clientes. */
+  async listarRecientes(limite = 50): Promise<Cliente[]> {
+    return resultado(
+      await this.db.from('clientes').select('*').order('creado_en', { ascending: false }).limit(limite),
+    );
+  }
+
   async obtener(id: Uuid): Promise<Cliente> {
     return resultado(await this.db.from('clientes').select('*').eq('id', id).single());
   }

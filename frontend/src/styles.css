@@ -1,1 +1,91 @@
 @import 'tailwindcss';
+
+/*
+ * Identidad visual del sistema: vino (marca) sobre neutros fríos.
+ * La escala "sky" se redefine con el vino para que los acentos que ya usan las pantallas
+ * (enlaces, chips, botones secundarios) queden dentro de la misma paleta.
+ */
+@theme {
+  --font-sans: 'Inter', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+
+  --color-vino-50: #fbf3f5;
+  --color-vino-100: #f6e3e8;
+  --color-vino-200: #edc6d0;
+  --color-vino-300: #e0a0b0;
+  --color-vino-400: #cc6f87;
+  --color-vino-500: #b4476a;
+  --color-vino-600: #9a2f55;
+  --color-vino-700: #7f2145;
+  --color-vino-800: #661b39;
+  --color-vino-900: #4f152d;
+  --color-vino-950: #2f0b1b;
+
+  --color-sky-50: #fbf3f5;
+  --color-sky-100: #f6e3e8;
+  --color-sky-200: #edc6d0;
+  --color-sky-300: #e0a0b0;
+  --color-sky-400: #cc6f87;
+  --color-sky-500: #b4476a;
+  --color-sky-600: #9a2f55;
+  --color-sky-700: #7f2145;
+  --color-sky-800: #661b39;
+  --color-sky-900: #4f152d;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: #f6f5f7;
+  color: #1e293b;
+}
+
+/* Foco visible y coherente en toda la aplicación */
+:focus-visible {
+  outline: 2px solid var(--color-vino-500);
+  outline-offset: 2px;
+}
+
+/* Entrada suave de cada paso o bloque. Sin fill-mode "forwards": al terminar no deja transform
+   (un transform residual cambiaría el bloque contenedor del contrato al imprimir). */
+@keyframes paso-entra {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes aparece {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animar-paso {
+  animation: paso-entra 0.35s ease-out backwards;
+}
+
+.animar-aparece {
+  animation: aparece 0.3s ease-out backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animar-paso,
+  .animar-aparece {
+    animation: none;
+  }
+}
+
+/* Barra de desplazamiento discreta en listas y tablas anchas */
+.scroll-fino {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-vino-200) transparent;
+}
