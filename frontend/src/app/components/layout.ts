@@ -20,6 +20,7 @@ interface Opcion {
   /** true: solo está activa en esa ruta exacta (no en las rutas hijas). */
   exacta?: boolean;
   soloAdmin?: boolean;
+  soloTrabajador?: boolean;
 }
 
 const OPCIONES: Opcion[] = [
@@ -27,6 +28,8 @@ const OPCIONES: Opcion[] = [
   { ruta: '/clientes', texto: 'Clientes', icono: 'clientes' },
   { ruta: '/prestamos/nuevo', texto: 'Nuevo préstamo', icono: 'prestamoNuevo', exacta: true },
   { ruta: '/prestamos', texto: 'Préstamos', icono: 'prestamos', exacta: true },
+  { ruta: '/solicitud-capital', texto: 'Solicitud de capital', icono: 'monedas', soloTrabajador: true },
+  { ruta: '/solicitudes', texto: 'Gestionar solicitudes', icono: 'bandeja', soloAdmin: true },
   { ruta: '/reportes', texto: 'Reportes', icono: 'reportes', soloAdmin: true },
   { ruta: '/demo', texto: 'Modo demostración', icono: 'demo', soloAdmin: true },
 ];
@@ -197,7 +200,10 @@ export class Layout implements OnInit {
   protected readonly colapsado = signal(menuColapsadoGuardado());
   protected readonly movilAbierto = signal(false);
   protected readonly opciones = computed(() =>
-    OPCIONES.filter((opcion) => !opcion.soloAdmin || this.auth.esAdmin()),
+    OPCIONES.filter(
+      (opcion) =>
+        (!opcion.soloAdmin || this.auth.esAdmin()) && (!opcion.soloTrabajador || !this.auth.esAdmin()),
+    ),
   );
   protected readonly fechaSimulada = computed(() => {
     const fecha = this.demo.fechaReferencia();

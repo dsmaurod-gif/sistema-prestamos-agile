@@ -13,6 +13,12 @@ const ACCIONES: { valor: string; texto: string }[] = [
   { valor: 'EVALUAR_PRESTAMO', texto: 'Evaluar préstamo' },
   { valor: 'APROBAR_PRESTAMO', texto: 'Aprobar préstamo' },
   { valor: 'CAMBIO_ESTADO', texto: 'Cambio de estado' },
+  { valor: 'SOLICITAR_CAPITAL', texto: 'Solicitar capital' },
+  { valor: 'APROBAR_SOLICITUD_CAPITAL', texto: 'Aprobar solicitud de capital' },
+  { valor: 'RECHAZAR_SOLICITUD_CAPITAL', texto: 'Rechazar solicitud de capital' },
+  { valor: 'REINICIAR_DEMO', texto: 'Reiniciar datos de demostración' },
+  { valor: 'VACIAR_DATOS', texto: 'Vaciar datos' },
+  { valor: 'RESTAURAR_DATOS', texto: 'Restaurar datos' },
 ];
 const ACCION_TEXTO: Record<string, string> = Object.fromEntries(
   ACCIONES.map((a) => [a.valor, a.texto]),
@@ -201,6 +207,15 @@ export class Bitacora implements OnInit {
       }
       case 'APROBAR_PRESTAMO':
         return `${formatearMonto(d['monto'] as number)} a ${d['plazo']} meses · cliente conforme`;
+      case 'SOLICITAR_CAPITAL':
+        return `${formatearMonto(d['monto'] as number)} · total del día ${formatearMonto(d['solicitado_hoy'] as number)}`;
+      case 'APROBAR_SOLICITUD_CAPITAL':
+      case 'RECHAZAR_SOLICITUD_CAPITAL':
+        return `${formatearMonto(d['monto'] as number)} · jornada ${formatearFecha(d['fecha'] as string)}`;
+      case 'VACIAR_DATOS':
+        return `${d['clientes']} clientes, ${d['prestamos']} préstamos y ${d['solicitudes']} solicitudes (con respaldo)`;
+      case 'RESTAURAR_DATOS':
+        return `Respaldo n.º ${d['respaldo_id']}`;
       case 'CAMBIO_ESTADO':
         return `${textoEstado(d['de'])} → ${textoEstado(d['a'])} (${formatearFecha(d['fecha'] as string)})`;
       default:

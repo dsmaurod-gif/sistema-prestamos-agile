@@ -4,6 +4,8 @@ import {
   FechaISO,
   Parametro,
   ParametroEditable,
+  InfoRespaldo,
+  ResumenDatos,
   ResumenReinicioDemo,
   Uuid,
 } from '../core/contrato';
@@ -69,5 +71,22 @@ export class DemoService {
     const resumen = await rpc(this.db, 'sp_demo_reiniciar', {});
     this.fecha.set('');
     return resumen;
+  }
+
+  /** sp_demo_vaciar → borra clientes, préstamos, cuotas y solicitudes; guarda un respaldo antes. */
+  async vaciarDatos(): Promise<ResumenDatos> {
+    const resumen = await rpc(this.db, 'sp_demo_vaciar', {});
+    this.fecha.set('');
+    return resumen;
+  }
+
+  /** sp_demo_restaurar → devuelve el último respaldo (y guarda el estado actual). */
+  async restaurarDatos(): Promise<ResumenDatos> {
+    return rpc(this.db, 'sp_demo_restaurar', {});
+  }
+
+  /** fn_respaldo_demo_info → qué respaldo hay disponible. */
+  async infoRespaldo(): Promise<InfoRespaldo> {
+    return rpc(this.db, 'fn_respaldo_demo_info', {});
   }
 }

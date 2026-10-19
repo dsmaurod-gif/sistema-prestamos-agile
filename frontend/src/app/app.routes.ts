@@ -40,6 +40,20 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/prestamos').then((m) => m.Prestamos),
       },
       {
+        path: 'solicitud-capital',
+        title: 'Solicitud de capital',
+        canActivate: [rolGuard('TRABAJADOR')],
+        loadComponent: () =>
+          import('./pages/solicitud-capital').then((m) => m.SolicitudCapital),
+      },
+      {
+        path: 'solicitudes',
+        title: 'Gestionar solicitudes',
+        canActivate: [rolGuard('ADMIN')],
+        loadComponent: () =>
+          import('./pages/gestionar-solicitudes').then((m) => m.GestionarSolicitudes),
+      },
+      {
         path: 'reportes',
         title: 'Reportes',
         canActivate: [rolGuard('ADMIN')],

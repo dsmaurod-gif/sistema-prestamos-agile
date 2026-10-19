@@ -6,7 +6,7 @@ Sistema web para las 5 sedes (Chimbote, Trujillo, Chiclayo, Piura, Tumbes). Uso 
 
 ```
 /docs                Requerimientos, HU y criterios, plan, contrato de API
-/sql                 Scripts de base de datos (01..08, más 04b y 05b), se ejecutan en orden
+/sql                 Scripts de base de datos (01..11, más 04b, 05b y 11b), se ejecutan en orden
 /supabase/functions  Edge Functions (consultar-dni, consultar-ruc)
 /scripts             Verificación del entorno y configuración del frontend (Node)
 /frontend            Aplicación web (Angular + Tailwind CSS)

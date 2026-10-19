@@ -1,6 +1,6 @@
 # Contrato de la API (lo que el frontend puede llamar)
 
-**Versión 1.3 · 17/10/2026**
+**Versión 1.4 · 19/10/2026**
 
 La base de datos tiene las **reglas de negocio**. El frontend **no las reimplementa**: llama a estas funciones con `supabase.rpc()` y muestra lo que devuelven.
 Los errores de regla llegan en `error.message` con texto listo para mostrar al usuario (en español).
@@ -181,7 +181,28 @@ const { data, error } = await supabase.functions.invoke('consultar-ruc', { body:
 - Con el error 502, `consultarRuc` lanza `ErrorBaseDatos`: no se puede registrar con RUC (se registra solo con DNI). *Por confirmar con el profesor* si debe permitirse el ingreso manual del RUC.
 - Al registrar, se envían `p_ruc` y `p_razon_social` a `fn_registrar_cliente` (sección 2).
 
+## 8. Capital diario y vaciado de datos (v1.4)
+
+Script `sql/11_solicitudes_capital.sql`. Las funciones toman la identidad de la **sesión** (`auth.uid()`): no reciben `p_trabajador`. La tabla `solicitudes_capital` solo se lee con `.from()` (el trabajador ve las suyas; el administrador, todas); nunca `insert`/`update` directo.
+
+| Función | Quién | Parámetros | Devuelve |
+|---|---|---|---|
+| `fn_solicitar_capital` | Trabajador | `p_monto numeric`, `p_comentario text` (opcional) | `uuid` de la solicitud |
+| `fn_resolver_solicitud` | Administrador | `p_solicitud uuid`, `p_aprobar boolean`, `p_comentario text` (opcional) | — |
+| `fn_resumen_capital_dia` | Trabajador | — | 1 fila: `limite, solicitado, pendiente, aprobado, rechazado, disponible_solicitar, desembolsado, saldo_disponible` |
+| `sp_demo_vaciar` | Administrador | — | `{clientes, prestamos, cuotas, solicitudes, respaldo_id}` borrados |
+| `sp_demo_restaurar` | Administrador | — | `{clientes, prestamos, cuotas, solicitudes, respaldo_id}` restaurados |
+| `fn_respaldo_demo_info` | Administrador | — | `{existe, creado_en, origen, clientes, prestamos, solicitudes}` |
+
+- **Límite:** parámetro `limite_solicitud_diaria` (50000). Cuenta pendientes y aprobadas del día (`fn_fecha_hoy`); lo rechazado libera cupo. Error típico: "La solicitud supera el límite diario de S/ 50,000.00. Hoy ya solicitaste S/ …; puedes pedir hasta S/ … más."
+- **Lectura:** `supabase.from('solicitudes_capital').select('*, solicitante:trabajadores!solicitudes_capital_trabajador_id_fkey(nombre), resolutor:trabajadores!solicitudes_capital_resuelto_por_fkey(nombre), sedes(nombre)')` → `SolicitudesService.listar()`.
+- **Bitácora:** `SOLICITAR_CAPITAL`, `APROBAR_SOLICITUD_CAPITAL`, `RECHAZAR_SOLICITUD_CAPITAL`, `VACIAR_DATOS`, `RESTAURAR_DATOS`.
+- **Vaciar/restaurar:** conservan trabajadores, sedes, parámetros y bitácora; guardan un respaldo (los 5 últimos). `sp_demo_reiniciar` también respalda y limpia solicitudes.
+
 ## Registro de cambios
+
+**1.4 (19/10/2026)**
+- Capital diario: tabla `solicitudes_capital`, `fn_solicitar_capital`, `fn_resolver_solicitud`, `fn_resumen_capital_dia` (sección 8). Vaciado y restauración de datos con respaldo: `sp_demo_vaciar`, `sp_demo_restaurar`, `fn_respaldo_demo_info`.
 
 **1.3 (17/10/2026)**
 - `fn_registrar_cliente`: nuevos parámetros opcionales `p_ruc` y `p_razon_social` (firma de 11 parámetros).

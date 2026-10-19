@@ -54,8 +54,8 @@ Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 
 ## 5. Base de datos (regla de oro)
 
-- **Nadie modifica tablas ni funciones desde el panel de Supabase.** Todo cambio de base va como archivo en `/sql` con número siguiente (`09_...sql`; el último es el 08), en un PR.
-- **Solo A ejecuta los `.sql` en Supabase** y avisa al grupo: "BD actualizada a 09". Orden en una base nueva: 01, 02, 03, **08**, 04, 04b. Si se vuelve a ejecutar 02, ejecutar 08 después.
+- **Nadie modifica tablas ni funciones desde el panel de Supabase.** Todo cambio de base va como archivo en `/sql` con número siguiente (`12_...sql`; el último es el 11), en un PR.
+- **Solo A ejecuta los `.sql` en Supabase** y avisa al grupo: "BD actualizada a 12". Orden en una base nueva: 01, 02, 03, **08**, 04, 04b, 09, 10, **11**. Si se vuelve a ejecutar 02, ejecutar 08 después.
 - Si necesitas un cambio en la BD, abre un *issue* "BD: ..." describiendo qué necesitas; no lo hagas tú.
 - Los datos de prueba se reinician con `sql/04_seed_demo.sql` y luego `sql/04b_demo_cupo_liberado.sql` (avisar antes: borran los clientes). Las pruebas de reglas v1.3 son `sql/05b_pruebas_al_cancelar.sql`; ejecutar 04 y 04b después.
 
